@@ -14,14 +14,14 @@ def makingsouptxt(urldef):
 res = []
 url = 'https://www.nextdirect.com/kz/ru/men'
 soup = makingsouptxt(url)
-categories_links = [f'{url[:-3]}{link["href"]}' for link in soup.find('div', class_='row tablet-rows').find_all('a') if 'Вся' not in link.text and 'Все' not in link.text]
+categories_links = [f'{url[:-3]}{link["href"][7:]}' for link in soup.find('div', class_='row tablet-rows').find_all('a') if 'Вся' not in link.text and 'Все' not in link.text]
 
 for link in categories_links:
     for i in range(1, 15):
         category_url = link + '?p=' + str(i)
         item_soup = makingsouptxt(category_url)
         print(category_url)
-        items = item_soup.find('div', {'data-pagenumber': '1'}).find_all('section', class_= 'Details')
+        items = item_soup.find('div', "MuiGrid-root MuiGrid-container plp-product-grid-wrapper plp-1s9f1m4").find_all('div', class_= "MuiCardContent-root produc-1ivfcou")
         for item in items:
-            res.append([item.find('a')['title'].split(' | '), item.find('a')['href']])
-            print(item.find('a')['title'].split(' | '), item.find('a')['href'])
+            res.append([item.find('a')['aria-label'].split(' | '), item.find('a')['href']])
+            print(item.find('a')['aria-label'].split(' | '), item.find('a')['href'])
