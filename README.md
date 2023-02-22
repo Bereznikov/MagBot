@@ -1,3 +1,3 @@
 # MagBot
- 
-Project is in development
+# I ❤️ Leha
+Project in development
