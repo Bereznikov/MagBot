@@ -136,8 +136,6 @@ def main():
     make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true')
     zara_products = get_product('zara_categories_clean.json')
     dump_to_file(file_name='zara_products.json', data=zara_products)
-    print(len(zara_products), "FINISHED")
-
 
 
 if __name__ == '__main__':
