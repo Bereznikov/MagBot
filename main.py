@@ -42,7 +42,14 @@ for primelink in primecategories[:-3]:
                     good_link = item.find('a')['href']
                     previoussib = item.previous_sibling
                     image = previoussib.find('img')['src']
-                    gooddict = {'id': good_id, 'name': good_name,'price': price, 'link': good_link, 'image_path': image, 'availability': 'in_stock', 'primecategory_name': primecategory_name, 'category_name': category_name}
+                    if '-' in price:
+                        price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
+                        price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
+                        gooddict = {'id': good_id, 'name': good_name, 'price_low': price_low, 'price_big': price_big, 'link': good_link,
+                                    'image_path': image, 'availability': 'in_stock',
+                                    'primecategory_name': primecategory_name, 'category_name': category_name}
+                    else:
+                        gooddict = {'id': good_id, 'name': good_name,'price': price.strip('тг').replace(' ', ''), 'link': good_link, 'image_path': image, 'availability': 'in_stock', 'primecategory_name': primecategory_name, 'category_name': category_name}
                     res.append(gooddict)
             else:
                 break
