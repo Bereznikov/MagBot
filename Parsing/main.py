@@ -53,5 +53,5 @@ for primelink in primecategories[:-3]:
                     res.append(gooddict)
             else:
                 break
-with open('next.json', 'w', encoding='utf-8') as file:
+with open('../venv/next.json', 'w', encoding='utf-8') as file:
     json.dump(res, file, indent=4, ensure_ascii=False)
