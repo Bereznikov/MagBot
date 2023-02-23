@@ -43,11 +43,19 @@ for primelink in primecategories[:-3]:
                     previoussib = item.previous_sibling
                     image = previoussib.find('img')['src']
                     if '-' in price:
-                        price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
-                        price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
-                        gooddict = {'id': good_id, 'name': good_name, 'price_low': price_low, 'price_big': price_big, 'link': good_link,
-                                    'image_path': image, 'availability': 'in_stock',
-                                    'primecategory_name': primecategory_name, 'category_name': category_name}
+                        try:
+                            price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
+                            price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
+                            gooddict = {'id': good_id, 'name': good_name, 'price_low': price_low,
+                                        'price_big': price_big,
+                                        'link': good_link,
+                                        'image_path': image, 'availability': 'in_stock'}
+                        except:
+                            brand, nameid, price, *tale = item.find('a')['aria-label'].split(' | ')
+                            good_name = nameid[:nameid.find(' (')]
+                            good_id = nameid[-6:].rstrip(')').lstrip(' (')
+                            gooddict = {'id': good_id, 'name': good_name, 'price': price.strip('тг').replace(' ', ''),
+                                        'link': good_link, 'image_path': image, 'availability': 'in_stock'}
                     else:
                         gooddict = {'id': good_id, 'name': good_name,'price': price.strip('тг').replace(' ', ''), 'link': good_link, 'image_path': image, 'availability': 'in_stock', 'primecategory_name': primecategory_name, 'category_name': category_name}
                     res.append(gooddict)
