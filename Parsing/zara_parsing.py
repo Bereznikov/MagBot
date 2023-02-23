@@ -111,7 +111,7 @@ def get_product_from_category(products_zara, url, id):
                     image_path = None
                 try:
                     seo = comp['seo']
-                    link_path = f'https://www.zara.com/kz/ru/{seo["keyword"]}-p{seo["seoProductId"]}'\
+                    link_path = f'https://www.zara.com/kz/ru/{seo["keyword"]}-p{seo["seoProductId"]}' \
                                 f'.html?v1={seo["discernProductId"]}'
                 except IndexError:
                     link_path = None
