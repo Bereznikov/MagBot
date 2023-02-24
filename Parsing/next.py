@@ -1,9 +1,8 @@
-import json
+from fake_useragent import UserAgent
 import requests
 import time
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-
+import json
 
 def makingsouptxt(urldef):
     ua = UserAgent()
@@ -31,7 +30,7 @@ for primelink in primecategories[:-3]:
         category_name = categories_names[counter]
         counter += 1
         for i in range(1, 826):
-            category_url = link + '?p=' + str(i)
+            category_url = link.strip('-0') + '?p=' + str(i)
             item_soup = makingsouptxt(category_url)
             print(category_url)
             items = item_soup.find('div', "MuiGrid-root MuiGrid-container plp-product-grid-wrapper plp-1s9f1m4").find_all('div', class_= "MuiCardContent-root produc-1ivfcou")
@@ -44,15 +43,23 @@ for primelink in primecategories[:-3]:
                     previoussib = item.previous_sibling
                     image = previoussib.find('img')['src']
                     if '-' in price:
-                        price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
-                        price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
-                        gooddict = {'id': good_id, 'name': good_name, 'price_low': price_low, 'price_big': price_big, 'link': good_link,
-                                    'image_path': image, 'availability': 'in_stock',
-                                    'primecategory_name': primecategory_name, 'category_name': category_name}
+                        try:
+                            price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
+                            price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
+                            gooddict = {'id': good_id, 'name': good_name, 'price_low': price_low,
+                                        'price_big': price_big,
+                                        'link': good_link,
+                                        'image_path': image, 'availability': 'in_stock'}
+                        except:
+                            brand, nameid, price, *tale = item.find('a')['aria-label'].split(' | ')
+                            good_name = nameid[:nameid.find(' (')]
+                            good_id = nameid[-6:].rstrip(')').lstrip(' (')
+                            gooddict = {'id': good_id, 'name': good_name, 'price': price.strip('тг').replace(' ', ''),
+                                        'link': good_link, 'image_path': image, 'availability': 'in_stock'}
                     else:
                         gooddict = {'id': good_id, 'name': good_name,'price': price.strip('тг').replace(' ', ''), 'link': good_link, 'image_path': image, 'availability': 'in_stock', 'primecategory_name': primecategory_name, 'category_name': category_name}
                     res.append(gooddict)
             else:
                 break
-with open('../venv/next.json', 'w', encoding='utf-8') as file:
+with open('next.json', 'w', encoding='utf-8') as file:
     json.dump(res, file, indent=4, ensure_ascii=False)
