@@ -12,10 +12,10 @@ def makingsouptxt(urldef):
     response.encoding = 'utf-8'
     return BeautifulSoup(response.text, 'lxml')
 
-
-item1 = 'https://www.nextdirect.com/kz/ru/shop/gender-women-category-dresses-0?p=119'
-link = 'https://www.nextdirect.com/kz/ru/shop/gender-women-category-dresses-0'
-for i in range(118, 826):
+# https://www.nextdirect.com/kz/ru/shop/gender-men-category-trousers/use-formal-0?p=101
+item1 = 'https://www.nextdirect.com/kz/ru/shop/department-childrenswear/size-7480cm'
+link = 'https://www.nextdirect.com/kz/ru/shop/department-childrenswear/size-7480cm'
+for i in range(41, 826):
     category_url = link + '?p=' + str(i)
     item_soup = makingsouptxt(category_url)
     print(category_url)
@@ -46,3 +46,5 @@ for i in range(118, 826):
                 gooddict = {'id': good_id, 'name': good_name, 'price': price.strip('тг').replace(' ', ''),
                             'link': good_link, 'image_path': image, 'availability': 'in_stock'}
             print(gooddict)
+    else:
+        break

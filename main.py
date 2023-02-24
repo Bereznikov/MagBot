@@ -30,7 +30,7 @@ for primelink in primecategories[:-3]:
         category_name = categories_names[counter]
         counter += 1
         for i in range(1, 826):
-            category_url = link + '?p=' + str(i)
+            category_url = link.strip('-0') + '?p=' + str(i)
             item_soup = makingsouptxt(category_url)
             print(category_url)
             items = item_soup.find('div', "MuiGrid-root MuiGrid-container plp-product-grid-wrapper plp-1s9f1m4").find_all('div', class_= "MuiCardContent-root produc-1ivfcou")
