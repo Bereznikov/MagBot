@@ -1,8 +1,9 @@
-from fake_useragent import UserAgent
+import json
 import requests
 import time
 from bs4 import BeautifulSoup
-import json
+from fake_useragent import UserAgent
+
 
 def makingsouptxt(urldef):
     ua = UserAgent()
