@@ -1,9 +1,13 @@
 import psycopg2
+from db_password import password
 
-conn = psycopg2.connect(dbname='northwind', user='avjustice')
+conn = psycopg2.connect(f"dbname='zamhrork' user='zamhrork' host='mouse.db.elephantsql.com' password={password}")
 print(conn)
 cur = conn.cursor()
-
-cur.execute("SELECT * FROM orders LIMIT 10")
-records = cur.fetchall()
-print(records)
+insert_query = """ INSERT INTO shop VALUES (%s,%s)"""
+for i in range(3, 1000):
+    cur.execute(insert_query, (i, 'a' * (i % 10)))
+conn.commit()
+cur.close()
+conn.close()
+print(i)
