@@ -1,52 +1,59 @@
-import sys
-
 import psycopg2
-from db_password import password_railway
+import psycopg2.extras
 import os
 import json
+from db_password import password_railway, host
+from time import time
+
+
+def time_it(func):
+    def time_it_wrapper(*args, **kwargs):
+        start = int(time())
+        result = func(*args, **kwargs)
+        total = int(time()) - start
+        print(f"Done in {total} s")
+        return result
+
+    return time_it_wrapper
+
 
 def make_sql_categories():
     zara_categories_file = os.path.normpath('../Parsing/zara_categories.json')
     with open(zara_categories_file, 'r') as file:
         zara_categories = json.load(file)
-    conn = psycopg2.connect(f"dbname='railway' user='postgres' "
-                            f"port=5522 host='containers-us-west-91.railway.app' password={password_railway}")
-    print(conn)
-    cur = conn.cursor()
-    insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
+    zara_categories_list = []
     for category in zara_categories:
         category_name = category['category']
         subcategory = category['subcategory']
         id = category['id']
         if category_name == 'ЖЕНЩИНЫ':
-            cur.execute(insert_query, (id, subcategory, 1))
+            section_id = 1
         elif category_name == 'МУЖЧИНЫ':
-            cur.execute(insert_query, (id, subcategory, 2))
+            section_id = 2
         elif category_name == 'МАЛЫШИ ДЕВОЧКИ' or category_name == 'МАЛЫШИ МАЛЬЧИКИ':
-            cur.execute(insert_query, (id, subcategory, 3))
+            section_id = 3
         elif category_name == 'ДЕВОЧКИ':
-            cur.execute(insert_query, (id, subcategory, 4))
+            section_id = 4
         elif category_name == 'МАЛЬЧИКИ':
-            cur.execute(insert_query, (id, subcategory, 5))
+            section_id = 5
         else:
-            print(category_name)
-    conn.commit()
-    cur.close()
-    conn.close()
+            section_id = 123
+        _tmp_tuple = (id, subcategory, section_id)
+        zara_categories_list.append(_tmp_tuple)
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
+            psycopg2.extras.execute_batch(cur, insert_query, zara_categories_list)
+
 
 def insert_into_product_zara():
-    zara_categories_file = os.path.normpath('../Parsing/zara_products.json')
-    with open(zara_categories_file, 'r') as file:
+    zara_products_file = os.path.normpath('../Parsing/zara_products.json')
+    with open(zara_products_file, 'r') as file:
         zara_products = json.load(file)
-    conn = psycopg2.connect(f"dbname='railway' user='postgres' "
-                            f"port=5522 host='containers-us-west-91.railway.app' password={password_railway}")
-    print(conn)
-    cur = conn.cursor()
-    insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
-    for i, product in enumerate(zara_products):
-        if i % 10 == 9:
-            print(f'[+] Добавил {i + 1} продукт')
-            conn.commit()
+    zara_products_list = []
+    for product in zara_products:
         id = product['id']
         name = product['name']
         price = product['price']
@@ -57,22 +64,24 @@ def insert_into_product_zara():
         shop_id = 1
         description = product['description']
         availability = product['availability'] == 'in_stock'
-        cur.execute(insert_query, (id, name, price, price_high, link, image, category, shop_id, description, availability))
+        _tmp_tuple = (id, name, price, price_high, link, image, category, shop_id, description, availability)
+        zara_products_list.append(_tmp_tuple)
 
-insert_into_product_zara()
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+            psycopg2.extras.execute_batch(cur, insert_query, zara_products_list)
 
 
+@time_it
+def main():
+    make_sql_categories()
+    print('Inserted categories')
+    insert_into_product_zara()
+    print('Inserted products')
 
 
-
-# select_query = """SELECT * FROM shop WHERE shop_id % 13 = 0"""
-# cur.execute(select_query)
-# records = cur.fetchall()
-# print(records)
-# for i in range(1000, 1100):
-#     cur.execute(insert_query, (i, 'a' * (i % 10)))
-# conn.commit()
-# print(i)
-# cur.close()
-# conn.close()
-# print(i)
+if __name__ == '__main__':
+    main()
