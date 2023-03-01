@@ -20,7 +20,7 @@ def make_full_categories_links(url, file_name):
     print('Получил грязные категории')
 
 
-def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids):
+def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name):
     try:
         section_name = subcategory['sectionName']
     except KeyError:
@@ -29,7 +29,7 @@ def add_to_categories_list(category, subcategory, zara_categories, unique_catego
         subcategory_url = f'https://www.zara.com/kz/ru/category/{subcategory["id"]}/products?ajax=true'
         zara_categories.append({
             'category': category['name'].replace(' ', ' '),
-            'subcategory': subcategory['name'].replace(' ', ' '),
+            'subcategory': category_name.strip(),
             'id': subcategory['id'],
             'url': subcategory_url,
             'sectionName': section_name
@@ -51,10 +51,11 @@ def clean_categories_links(file_from, file_to):
     dump_to_file(clean_categories, file_to)
 
 
-def check_all_subcategory(category, zara_categories, original, unique_category_ids):
+def check_all_subcategory(category, zara_categories, original, unique_ids, category_name=''):
     for subcategory in category['subcategories']:
-        add_to_categories_list(original, subcategory, zara_categories, unique_category_ids)
-        check_all_subcategory(subcategory, zara_categories, original, unique_category_ids)
+        tmp_subcategory = subcategory['name'].replace(' ', ' ')
+        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}')
+        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}')
 
 
 def make_categories_links(url):
@@ -65,6 +66,7 @@ def make_categories_links(url):
 
     zara_categories = []
     unique_category_ids = set()
+
 
     for category in zara_categories_full:
         if category['name'] != 'ДЕТИ':
@@ -110,6 +112,9 @@ def get_product_from_category(products_zara, url, id, unique_product_ids):
             commercialComponents = elem['commercialComponents']
         except KeyError:
             commercialComponents = None
+            continue
+        except Exception as ex:
+            print('WTF IS HAPPENING?!', ex, ex.__class__)
         for comp in commercialComponents:
             if comp['type'] != 'Bundle':
                 try:
