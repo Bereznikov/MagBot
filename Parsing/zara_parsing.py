@@ -21,12 +21,17 @@ def make_full_categories_links(url, file_name):
 
 
 def add_to_categories_list(category, subcategory, zara_categories):
+    try:
+        section_name = subcategory['sectionName']
+    except KeyError:
+        section_name = None
     subcategory_url = f'https://www.zara.com/kz/ru/category/{subcategory["id"]}/products?ajax=true'
     zara_categories.append({
         'category': category['name'].replace(' ', ' '),
         'subcategory': subcategory['name'].replace(' ', ' '),
         'id': subcategory['id'],
-        'url': subcategory_url
+        'url': subcategory_url,
+        'sectionName': section_name
     })
 
 
