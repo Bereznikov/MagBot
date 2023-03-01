@@ -17,6 +17,7 @@ def dump_to_file(data, file_name):
 def make_full_categories_links(url, file_name):
     full_categories = requests.get(url=url, headers=make_headers())
     dump_to_file(data=full_categories.json(), file_name=file_name)
+    print('Получил грязные категории')
 
 
 def add_to_categories_list(category, subcategory, zara_categories):
@@ -65,9 +66,10 @@ def make_categories_links(url):
     for category in children_category:
         check_all_subcategory(category, zara_categories, category)
 
-    dirty_file_name = 'zara_categories.json'
-    clean_file_name = 'zara_categories_clean.json'
+    dirty_file_name = 'zara_categories_flat.json'
+    clean_file_name = 'zara_categories.json'
     dump_to_file(data=zara_categories, file_name=dirty_file_name)
+    print('Сделал плосские категории')
 
     clean_categories_links(dirty_file_name, clean_file_name)
 
@@ -134,7 +136,7 @@ def get_product_from_category(products_zara, url, id):
 
 def main():
     make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true')
-    zara_products = get_product('zara_categories_clean.json')
+    zara_products = get_product('zara_categories.json')
     dump_to_file(file_name='zara_products.json', data=zara_products)
 
 
