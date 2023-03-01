@@ -67,7 +67,6 @@ def make_categories_links(url):
     zara_categories = []
     unique_category_ids = set()
 
-
     for category in zara_categories_full:
         if category['name'] != 'ДЕТИ':
             check_all_subcategory(category, zara_categories, category, unique_category_ids)
