@@ -17,16 +17,24 @@ def dump_to_file(data, file_name):
 def make_full_categories_links(url, file_name):
     full_categories = requests.get(url=url, headers=make_headers())
     dump_to_file(data=full_categories.json(), file_name=file_name)
+    print('Получил грязные категории')
 
 
-def add_to_categories_list(category, subcategory, zara_categories):
-    subcategory_url = f'https://www.zara.com/kz/ru/category/{subcategory["id"]}/products?ajax=true'
-    zara_categories.append({
-        'category': category['name'].replace(' ', ' '),
-        'subcategory': subcategory['name'].replace(' ', ' '),
-        'id': subcategory['id'],
-        'url': subcategory_url
-    })
+def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name):
+    try:
+        section_name = subcategory['sectionName']
+    except KeyError:
+        section_name = None
+    if subcategory['id'] not in unique_category_ids:
+        subcategory_url = f'https://www.zara.com/kz/ru/category/{subcategory["id"]}/products?ajax=true'
+        zara_categories.append({
+            'category': category['name'].replace(' ', ' '),
+            'subcategory': category_name.strip(),
+            'id': subcategory['id'],
+            'url': subcategory_url,
+            'sectionName': section_name
+        })
+        unique_category_ids.add(subcategory['id'])
 
 
 def clean_categories_links(file_from, file_to):
@@ -43,10 +51,11 @@ def clean_categories_links(file_from, file_to):
     dump_to_file(clean_categories, file_to)
 
 
-def check_all_subcategory(category, zara_categories, original):
+def check_all_subcategory(category, zara_categories, original, unique_ids, category_name=''):
     for subcategory in category['subcategories']:
-        add_to_categories_list(original, subcategory, zara_categories)
-        check_all_subcategory(subcategory, zara_categories, original)
+        tmp_subcategory = subcategory['name'].replace(' ', ' ')
+        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}')
+        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}')
 
 
 def make_categories_links(url):
@@ -56,18 +65,20 @@ def make_categories_links(url):
         zara_categories_full = json.load(file)['categories']
 
     zara_categories = []
+    unique_category_ids = set()
 
     for category in zara_categories_full:
         if category['name'] != 'ДЕТИ':
-            check_all_subcategory(category, zara_categories, category)
+            check_all_subcategory(category, zara_categories, category, unique_category_ids)
 
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
-        check_all_subcategory(category, zara_categories, category)
+        check_all_subcategory(category, zara_categories, category, unique_category_ids)
 
-    dirty_file_name = 'zara_categories.json'
-    clean_file_name = 'zara_categories_clean.json'
+    dirty_file_name = 'zara_categories_flat.json'
+    clean_file_name = 'zara_categories.json'
     dump_to_file(data=zara_categories, file_name=dirty_file_name)
+    print('Сделал плосские категории')
 
     clean_categories_links(dirty_file_name, clean_file_name)
 
@@ -79,15 +90,17 @@ def get_product(file_name):
         os.mkdir('products')
 
     products_zara = []
+    unique_product_ids = set()
     for i, category in enumerate(zara_categories):
         print(f'[+] Обработка {i}/{len(zara_categories)} {category["subcategory"]}')
         id = category['id']
         url = category['url']
-        get_product_from_category(products_zara, url, id)
+        get_product_from_category(products_zara, url, id, unique_product_ids)
+    print(len(unique_product_ids))
     return products_zara
 
 
-def get_product_from_category(products_zara, url, id):
+def get_product_from_category(products_zara, url, id, unique_product_ids):
     category_info = requests.get(url=url, headers=make_headers()).json()
     dump_to_file(data=category_info, file_name=f'products/category_{id}.json')
     with open(f'products/category_{id}.json', 'r') as file:
@@ -97,10 +110,10 @@ def get_product_from_category(products_zara, url, id):
         try:
             commercialComponents = elem['commercialComponents']
         except KeyError:
+            commercialComponents = None
             continue
-        except:
-            continue
-
+        except Exception as ex:
+            print('WTF IS HAPPENING?!', ex, ex.__class__)
         for comp in commercialComponents:
             if comp['type'] != 'Bundle':
                 try:
@@ -116,6 +129,9 @@ def get_product_from_category(products_zara, url, id):
                 except IndexError:
                     link_path = None
 
+                if comp.get('id') in unique_product_ids:
+                    continue
+
                 products_zara.append({
                     'id': comp.get('id'),
                     'name': comp.get('name'),
@@ -126,15 +142,13 @@ def get_product_from_category(products_zara, url, id):
                     'description': comp.get('description'),
                     'section': comp.get('section'),
                     'category_id': id,
-                    # 'type': comp['type'],
-                    # 'category_url': url[0],
-                    # 'el_num': el_num,
                 })
+                unique_product_ids.add(comp.get('id'))
 
 
 def main():
     make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true')
-    zara_products = get_product('zara_categories_clean.json')
+    zara_products = get_product('zara_categories.json')
     dump_to_file(file_name='zara_products.json', data=zara_products)
 
 
