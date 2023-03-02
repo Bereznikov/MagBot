@@ -106,7 +106,7 @@ for primelink in primecategories[:-3]:
                     good_link = item.find('a')['href']
                     previoussib = item.previous_sibling
                     image = previoussib.find('img')['src']
-                    if '-' in price:
+                    if '-' in price or '&' in good_id:
                         try:
                             price_low = price.split(' - ')[0].strip(' тг').replace(' ', '')
                             price_big = price.split(' - ')[1].strip(' тг').replace(' ', '')
@@ -122,7 +122,7 @@ for primelink in primecategories[:-3]:
                         except:
                             brand, nameid, price, *tale = item.find('a')['aria-label'].split(' | ')
                             good_name = nameid[:nameid.find(' (')]
-                            good_id = nameid[-6:].rstrip(')').lstrip(' (')
+                            good_id = nameid.rstrip(')').lstrip(' (')[-6:]
                             gooddict = {'id': good_id,
                                         'name': good_name,
                                         'price_low': price.strip('тг').replace(' ', ''),
@@ -149,10 +149,10 @@ with open('next.json', 'w', encoding='utf-8') as file:
     json.dump(res, file, indent=4, ensure_ascii=False)
 with open('next_id.txt', 'w', encoding='utf-8') as file1:
     for i in id_list:
-        file1.write(i)
+        file1.write(i + '\n')
 with open('next_idset.txt', 'w', encoding='utf-8') as file2:
     for j in id_set:
-        file2.write(j)
+        file2.write(j + '\n')
 if len(id_set) == len(id_list):
     print("Correct id's")
 else:
