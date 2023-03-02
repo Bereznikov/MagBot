@@ -2,3 +2,4 @@
 /Parsing/zara_categories_flat.json
 /Parsing/zara_categories_full.json
 /TelegramBot/key.py
+/TelegramBot/db_password.py
