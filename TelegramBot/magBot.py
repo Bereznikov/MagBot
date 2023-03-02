@@ -1,4 +1,5 @@
 import logging
+from key import key
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -17,7 +18,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('5678309476:AAF1MdFTPr1OiXG1tQ4JHB5RYvzy4_NV05Y').build()
+    application = ApplicationBuilder().token(key).build()
 
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
