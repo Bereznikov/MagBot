@@ -49,9 +49,8 @@ async def zara_image(update, context):
             select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE shop_id = 1 LIMIT 500 """
             cur.execute(select_query)
             records = cur.fetchall()
-            for rand_int in range(random.randint(350, 400), random.randint(401, 450)):
-                if rand_int % 2 == 3:
-                    await asyncio.sleep(10)
+            rand_int = random.randint(1,400)
+            for rand_int in range(rand_int, rand_int + 1):
                 product_link = records[rand_int][0]
                 image_link = records[rand_int][1]
                 product_name = records[rand_int][2]
