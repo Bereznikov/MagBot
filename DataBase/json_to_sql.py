@@ -58,32 +58,6 @@ def make_sql_categories_from_one_shop(file_path, categories_list, categories_id)
             categories_list.append(_tmp_tuple)
 
 
-# def insert_into_product_zara(file_name):
-#     zara_products_file = os.path.normpath(file_name)
-#     with open(zara_products_file, 'r') as file:
-#         zara_products = json.load(file)
-#     zara_products_list = []
-#     for product in zara_products:
-#         id = product['id']
-#         name = product['name']
-#         price = product['price']
-#         price_high = None
-#         link = product['link']
-#         image = product['image_path']
-#         category = product['category_id']
-#         shop_id = 1
-#         description = product['description']
-#         availability = product['availability'] == 'in_stock'
-#         _tmp_tuple = (id, name, price, price_high, link, image, category, shop_id, description, availability)
-#         zara_products_list.append(_tmp_tuple)
-#
-#     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-#                           password=password_railway) as conn:
-#         conn.autocommit = True
-#         with conn.cursor() as cur:
-#             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
-#             psycopg2.extras.execute_batch(cur, insert_query, zara_products_list)
-
 def insert_into_product(file_name, shop):
     products_file = os.path.normpath(file_name)
     products_list = []
@@ -108,43 +82,11 @@ def insert_into_product(file_name, shop):
         else:
             print(id, category)
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                              password=password_railway) as conn:
+                          password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
             psycopg2.extras.execute_batch(cur, insert_query, products_list)
-            # with conn.cursor() as cur:
-            #     insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
-            #     for product in products_list:
-            #         print(product)
-            #         cur.execute(insert_query, product)
-
-
-# def insert_into_product_next(file_name):
-#     next_products_file = os.path.normpath(file_name)
-#     with open(next_products_file, 'r') as file:
-#         next_products = json.load(file)
-#     next_products_list = []
-#     for product in next_products:
-#         id = product['id']
-#         name = product['name']
-#         price = product['price_low']
-#         price_high = product['price_big']
-#         link = product['link']
-#         image = product['image_path']
-#         category = product['category_id']
-#         shop_id = 2
-#         description = None
-#         availability = product['availability'] == 'in_stock'
-#         _tmp_tuple = (id, name, price, price_high, link, image, category, shop_id, description, availability)
-#         next_products_list.append(_tmp_tuple)
-#
-#     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-#                           password=password_railway) as conn:
-#         conn.autocommit = True
-#         with conn.cursor() as cur:
-#             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
-#             psycopg2.extras.execute_batch(cur, insert_query, next_products_list)
 
 
 @time_it
