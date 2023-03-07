@@ -46,11 +46,11 @@ async def zara_image(update, context):
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE shop_id = 1 LIMIT 500 """
-            cur.execute(select_query)
+            rand_int = random.randint(1, 400)
+            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE shop_id = 1 LIMIT 1 OFFSET %s"""
+            cur.execute(select_query, (rand_int,))
             records = cur.fetchall()
-            rand_int = random.randint(1,400)
-            for rand_int in range(rand_int, rand_int + 1):
+            for rand_int in range(0, 1):
                 product_link = records[rand_int][0]
                 image_link = records[rand_int][1]
                 product_name = records[rand_int][2]
