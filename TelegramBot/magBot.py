@@ -29,16 +29,30 @@ async def echo(update, context):
     await update.message.reply_text(update.message.text)
 
 
-async def zara_link(update, context):
+async def woman_dress(update, context):
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            select_query = """ SELECT product_link FROM product WHERE shop_id = 1 LIMIT 100"""
-            cur.execute(select_query)
+            count_query = "SELECT COUNT(*) FROM product WHERE category_id = '2187655'"
+            cur.execute(count_query)
+            number_of_products = cur.fetchone()[0]
+            rand_dress = random.randint(1, number_of_products)
+            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE category_id = '2187655' LIMIT 1 OFFSET (%s)"""
+            cur.execute(select_query, (rand_dress,))
             records = cur.fetchall()
-            tmp = records[random.randint(0, 100)][0]
-            await update.message.reply_text(tmp)
+            for rand_int in range(0, 1):
+                product_link = records[rand_int][0]
+                image_link = records[rand_int][1]
+                product_name = records[rand_int][2]
+                price = records[rand_int][3]
+                print(product_link, image_link)
+                text = f"<a href='{image_link}'>картинка</a>"
+                # await update.message.reply_text(message.chat.id, text, parse_mode='MarkdownV2')
+                # await update.message.reply_text(text, )
+                # await update.message.reply_text(image_link)
+            await update.message.reply_markdown_v2(text=f"[l]({image_link})"
+                                                        f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
 
 
 async def random_product(update, context):
@@ -73,9 +87,9 @@ if __name__ == '__main__':
 
     start_handler = CommandHandler('start', start)
     help_handler = CommandHandler('help', helper)
-    zara_handler = CommandHandler('zara', zara_link)
+    woman_dress_handler = CommandHandler('dress', woman_dress)
     random_product_handler = CommandHandler('random', random_product)
-    application.add_handler(zara_handler)
+    application.add_handler(woman_dress_handler)
     application.add_handler(start_handler)
     application.add_handler(help_handler)
     application.add_handler(random_product_handler)
