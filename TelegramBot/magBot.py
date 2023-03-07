@@ -41,14 +41,18 @@ async def zara_link(update, context):
             await update.message.reply_text(tmp)
 
 
-async def zara_image(update, context):
+async def random_product(update, context):
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            rand_int = random.randint(1, 400)
-            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE shop_id = 1 LIMIT 1 OFFSET %s"""
-            cur.execute(select_query, (rand_int,))
+            rand_store = random.randint(1, 2)
+            count_query = "SELECT COUNT(*) FROM product WHERE shop_id = (%s)"
+            cur.execute(count_query, (rand_store,))
+            shop_products = cur.fetchone()[0]
+            rand_product = random.randint(1, shop_products)
+            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE shop_id = %s LIMIT 1 OFFSET %s"""
+            cur.execute(select_query, (rand_store, rand_product,))
             records = cur.fetchall()
             for rand_int in range(0, 1):
                 product_link = records[rand_int][0]
@@ -70,11 +74,11 @@ if __name__ == '__main__':
     start_handler = CommandHandler('start', start)
     help_handler = CommandHandler('help', helper)
     zara_handler = CommandHandler('zara', zara_link)
-    zara_image_handler = CommandHandler('image', zara_image)
+    random_product_handler = CommandHandler('random', random_product)
     application.add_handler(zara_handler)
     application.add_handler(start_handler)
     application.add_handler(help_handler)
-    application.add_handler(zara_image_handler)
+    application.add_handler(random_product_handler)
 
     # application.add_handler(MessageHandler(filters.TEXT, zara_link))
 
