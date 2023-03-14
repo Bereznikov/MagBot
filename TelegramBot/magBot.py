@@ -6,17 +6,28 @@ import random
 from key import key
 from customer import Customer
 from db_password import host, password_railway
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
 
 async def start(update, context):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=f'Привет, {update.effective_user.username}')
+    reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
+
+    await update.message.reply_text(
+        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {update.effective_user.username} \n"
+        "Из какого магазина хотите заказать одежду?",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="название магазина"
+        ),
+    )
+
+    # await context.bot.send_message(chat_id=update.effective_chat.id, text=f'Привет, {update.effective_user.username}')
 
 
 async def helper(update, context):
@@ -79,7 +90,6 @@ async def random_product(update, context):
                 # await update.message.reply_text(image_link)
                 await update.message.reply_markdown_v2(text=f"[l]({image_link})"
                                                             f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
-
 
 
 if __name__ == '__main__':
