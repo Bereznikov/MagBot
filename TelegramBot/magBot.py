@@ -81,6 +81,7 @@ async def random_product(update, context):
                                                             f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
 
 
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(key).build()
 
