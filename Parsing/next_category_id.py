@@ -8,10 +8,11 @@ def make_next_json_with_category_id():
         next_categories = json.load(file)
     next_categories_dict = {}
     for category in next_categories:
-        next_categories_dict[category['subcategory']] = category['id']
+        next_categories_dict[category['subcategory'], category['category']] = category['id']
     for product in next_product:
-        if next_categories_dict.get(product['category_name'].upper()):
-            product['category_id'] = next_categories_dict.get(product['category_name'].upper())
+        if next_categories_dict.get((product['category_name'].upper(), product['primecategory_name'].upper())):
+            product['category_id'] =\
+                next_categories_dict.get((product['category_name'].upper(), product['primecategory_name'].upper()))
     # TODO
     # Ниже можно поменять название, чтобы не плодить файлы
     # Еще можно повторяющиеся ID удалить где-то тут

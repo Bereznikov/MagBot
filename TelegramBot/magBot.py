@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SHOP, SECTION, DATABASE, SELECTION, RESTART = range(5)
+SHOP, SECTION, DATABASE, SELECTION, CATEGORY = range(5)
 
 USERS = {}
 
@@ -39,11 +39,10 @@ async def start(update, context):
 async def shop_name(update, context):
     user = update.message.from_user
     logger.info("Shop name %s: %s", user.first_name, update.message.text)
-    if update.message.text == "От тети Глаши":
-        await update.message.reply_text(f"Ха-ха, такого магазина нет, {user.first_name}. Ну ты и дурачок... \n"
-                                        f"Начать заново /start")
     USERS[user.id] = [update.message.text]
-    reply_keyboard = [["Мужчины", "Женщины", "Малыши"]]
+    reply_keyboard = [["Мужчины", "Женщины"], ["Мальчики", "Девочки", "Малыши"]]
+    if update.message.text == "Next":
+        reply_keyboard[1].append("Для дома")
     await update.message.reply_text(
         'Отлично, теперь скажите для кого ищете одежду?',
         reply_markup=ReplyKeyboardMarkup(
@@ -62,11 +61,35 @@ async def you_stupid(update, context):
     return SELECTION
 
 
-async def section_name(update, context):
+async def category_name(update, context):
     user = update.message.from_user
-    logger.info("Section name %s: %s", user.first_name, update.message.text)
-    await update.message.reply_text("Отлично. Сейчас отправим вам варианты товаров.")
-    return DATABASE
+    if update.message.text != 'Показать еще':
+        USERS[user.id].append(update.message.text)
+    logger.info("%s выбрал секцию: %s", user.first_name, USERS[user.id][1])
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            store_name = USERS[user.id][0]
+            section_name = USERS[user.id][1]
+            popular_categories_query = """SELECT category_name
+                                            FROM product_full_info
+                                            WHERE shop_name = %s AND section_name = %s
+                                            GROUP BY category_name
+                                            ORDER BY COUNT(*) DESC
+                                            """
+            cur.execute(popular_categories_query, (store_name, section_name))
+            _tmp = cur.fetchall()
+            print(_tmp)
+            _popular_categories = [a[0].title() for a in _tmp[:12]]
+            popular_categories = [_popular_categories[:3], _popular_categories[3: 6], _popular_categories[6:9]]
+            await update.message.reply_text(
+                'Хорошо, а из какой категории товаров?',
+                reply_markup=ReplyKeyboardMarkup(
+                    popular_categories, one_time_keyboard=True, resize_keyboard=True,
+                    input_field_placeholder="категория"))
+
+    return CATEGORY
 
 
 async def helper(update, context):
@@ -107,32 +130,30 @@ async def woman_dress(update, context):
 async def random_product(update, context):
     user = update.message.from_user
     if update.message.text != 'Показать еще':
-        USERS[user.id].append(update.message.text)
-    logger.info("%s начал искать: %s", user.first_name, USERS[user.id])
+        USERS[user.id].append(update.message.text.upper())
+    logger.info("%s начал искать: %s", user.first_name, USERS[user.id][2])
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             store_name = USERS[user.id][0]
             section_name = USERS[user.id][1]
+            category_name = USERS[user.id][2]
             count_query = """SELECT COUNT(*)
-                            FROM product p
-                            JOIN category c USING(category_id)
-                            JOIN section se USING(section_id)
-                            JOIN shop sh USING(shop_id)
-                            WHERE sh.shop_name = %s AND se.section_name = %s"""
-            cur.execute(count_query, (store_name, section_name))
+                            FROM product_full_info
+                            WHERE shop_name = %s AND section_name = %s AND category_name = %s"""
+            cur.execute(count_query, (store_name, section_name, category_name))
             number_of_products = cur.fetchone()[0]
+            print(number_of_products)
+            if not number_of_products:
+                return SELECTION
             rand_product = random.randint(1, number_of_products)
-            select_query = """SELECT p.product_link, p.image_link, p.product_name, p.price
-                            FROM product p
-                            JOIN category c USING(category_id)
-                            JOIN section se USING(section_id)
-                            JOIN shop sh USING(shop_id)
-                            WHERE sh.shop_name = %s AND se.section_name = %s
+            select_query = """SELECT product_link, image_link, product_name, price
+                            FROM product_full_info
+                            WHERE shop_name = %s AND section_name = %s AND category_name = %s
                             LIMIT 1 OFFSET %s"""
 
-            cur.execute(select_query, (store_name, section_name, rand_product))
+            cur.execute(select_query, (store_name, section_name, category_name, rand_product))
             records = cur.fetchone()
             product_link = records[0]
             image_link = records[1]
@@ -150,13 +171,14 @@ async def random_product(update, context):
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(key).build()
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             SHOP: [MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
                    MessageHandler(filters.Regex("^(От тети Глаши)$"), you_stupid)],
-            SECTION: [MessageHandler(filters.Regex("^(Мужчины|Женщины|Малыши)$"), random_product)],
+            SECTION: [
+                MessageHandler(filters.Regex("^(Мужчины|Женщины|Девочки|Мальчики|Малыши|Для дома)$"), category_name)],
+            CATEGORY: [MessageHandler(filters.TEXT, random_product)],
             SELECTION: [MessageHandler(filters.Regex("^(Показать еще)$"), random_product),
                         MessageHandler(filters.Regex("^(Выбрать заново)$"), start)],
             # DATABASE: [MessageHandler(, random_product)]
@@ -165,13 +187,13 @@ if __name__ == '__main__':
     )
 
     application.add_handler(conv_handler)
-    help_handler = CommandHandler('help', helper)
-    woman_dress_handler = CommandHandler('dress', woman_dress)
-    random_product_handler = CommandHandler('random', random_product)
-    application.add_handler(woman_dress_handler)
-    # application.add_handler(start_handler)
-    application.add_handler(help_handler)
-    application.add_handler(random_product_handler)
+
+    # help_handler = CommandHandler('help', helper)
+    # woman_dress_handler = CommandHandler('dress', woman_dress)
+    # random_product_handler = CommandHandler('random', random_product)
+    # application.add_handler(woman_dress_handler)
+    # application.add_handler(help_handler)
+    # application.add_handler(random_product_handler)
 
     # application.add_handler(MessageHandler(filters.TEXT, zara_link))
 
