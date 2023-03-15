@@ -238,8 +238,9 @@ async def checkout(update, context):
     cart = '\n'.join(cart_ar)
     USERS[user.id]['cart'] = None
     await update.message.reply_text(f'Ваш заказ оформлен! \n'
-                                    f'{cart}', reply_markup=ReplyKeyboardRemove())
-    return RESTART
+                                    f'{cart}',
+                                    reply_markup=ReplyKeyboardMarkup([['Выбрать заново']], resize_keyboard=True))
+    return SELECTION
 
 
 if __name__ == '__main__':
@@ -256,7 +257,7 @@ if __name__ == '__main__':
                         MessageHandler(filters.Regex("^(Добавить в корзину)$"), add_product),
                         MessageHandler(filters.Regex("^(Показать еще)$"), random_product),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
-            RESTART: [MessageHandler(filters.TEXT, restart)]
+            # RESTART: [MessageHandler(filters.TEXT, restart)]
             # DATABASE: [MessageHandler(, random_product)]
         },
         fallbacks=[CommandHandler("start", start)]
