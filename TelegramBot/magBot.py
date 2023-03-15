@@ -2,6 +2,7 @@ import logging
 import time
 import asyncio
 import psycopg2
+import psycopg2.extras
 import random
 from key import key
 from collections import defaultdict
@@ -112,15 +113,6 @@ async def category_name(update, context):
     return CATEGORY
 
 
-async def helper(update, context):
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text=f'Не жди помощи, {update.effective_user.first_name}')
-
-
-async def echo(update, context):
-    await update.message.reply_text(update.message.text)
-
-
 async def woman_dress(update, context):
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
@@ -228,11 +220,19 @@ async def add_product(update, context):
 
 
 async def checkout(update, context):
+    order_id = random.randint(1, 10 ** 7)
     user = update.message.from_user
+    customer_id = user.id
+    first_name = user.first_name
+    last_name = user.last_name
+    username = user.username
     logger.info("%s оформил заказ. Корзина: %s", user.first_name, USERS[user.id]['cart'])
     cart_ar = []
+    order_detail = []
     for product in USERS[user.id]['cart']:
+        product_id = product
         product = USERS[user.id]['cart'][product]
+        order_detail.append((product_id, order_id, product["quantity"]))
         cart_ar.append(f'Товар: {product["name"]} Цена: {product["price"]} Количество: {product["quantity"]} \n'
                        f'Ссылка : {product["link"]}')
     cart = '\n'.join(cart_ar)
@@ -240,6 +240,32 @@ async def checkout(update, context):
     await update.message.reply_text(f'Ваш заказ оформлен! \n'
                                     f'{cart}',
                                     reply_markup=ReplyKeyboardMarkup([['Выбрать заново']], resize_keyboard=True))
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            insert_user_query = """INSERT INTO customer (customer_id, first_name, last_name, username)
+            VALUES (%s, %s, %s, %s)"""
+            try:
+                cur.execute(insert_user_query, (customer_id, first_name, last_name, username,))
+            except Exception as ex:
+                logger.exception(ex)
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            insert_order_query = """INSERT INTO orders (customer_id, status_id, shipper_id) VALUES (%s, %s, %s)"""
+            try:
+                cur.execute(insert_order_query, (customer_id, 1, 1,))
+                print('Успешно добавил')
+            except Exception as ex:
+                logger.info(ex)
+            select_order_id_query = """SELECT MAX(order_id) FROM orders"""
+            cur.execute(select_order_id_query)
+            order_id = cur.fetchone()[0]
+            order_detail = [(a[0], order_id, a[2]) for a in order_detail]
+            insert_order_detail_query = """INSERT INTO order_detail (product_id, order_id, quantity) VALUES (%s, %s, %s)"""
+            psycopg2.extras.execute_batch(cur, insert_order_detail_query, order_detail)
     return SELECTION
 
 
