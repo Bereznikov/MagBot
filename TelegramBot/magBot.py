@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SHOP, SECTION, DATABASE, SELECTION, CATEGORY = range(5)
+SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART = range(6)
 
 USERS = {}
 START_STATE = {
@@ -174,6 +174,7 @@ async def random_product(update, context):
             select_query = """SELECT product_link, image_link, product_name, price
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
+                            ORDER BY product_id
                             LIMIT 1 OFFSET %s"""
             cur.execute(select_query, (store_name, section_name, category_name, USERS[user.id]['number']))
             records = cur.fetchone()
@@ -206,6 +207,7 @@ async def add_product(update, context):
             select_query = """SELECT product_name, product_id, product_link, price
                                         FROM product_full_info
                                         WHERE shop_name = %s AND section_name = %s AND category_name = %s
+                                        ORDER BY product_id
                                         LIMIT 1 OFFSET %s"""
             cur.execute(select_query, (store_name, section_name, category_name, USERS[user.id]['number']))
             product_name, product_id, product_link, price = cur.fetchone()
@@ -227,6 +229,7 @@ async def add_product(update, context):
 
 async def checkout(update, context):
     user = update.message.from_user
+    logger.info("%s оформил заказ. Корзина: %s", user.first_name, USERS[user.id]['cart'])
     cart_ar = []
     for product in USERS[user.id]['cart']:
         product = USERS[user.id]['cart'][product]
@@ -235,7 +238,8 @@ async def checkout(update, context):
     cart = '\n'.join(cart_ar)
     USERS[user.id]['cart'] = None
     await update.message.reply_text(f'Ваш заказ оформлен! \n'
-                                    f'{cart}')
+                                    f'{cart}', reply_markup=ReplyKeyboardRemove())
+    return RESTART
 
 
 if __name__ == '__main__':
@@ -251,7 +255,8 @@ if __name__ == '__main__':
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), checkout),
                         MessageHandler(filters.Regex("^(Добавить в корзину)$"), add_product),
                         MessageHandler(filters.Regex("^(Показать еще)$"), random_product),
-                        MessageHandler(filters.Regex("^(Выбрать заново)$"), restart)],
+                        MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
+            RESTART: [MessageHandler(filters.TEXT, restart)]
             # DATABASE: [MessageHandler(, random_product)]
         },
         fallbacks=[CommandHandler("start", start)]
