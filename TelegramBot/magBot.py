@@ -4,6 +4,7 @@ import asyncio
 import psycopg2
 import psycopg2.extras
 import random
+from datetime import datetime, timezone
 from key import key
 from collections import defaultdict
 from customer import Customer
@@ -254,9 +255,10 @@ async def checkout(update, context):
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            insert_order_query = """INSERT INTO orders (customer_id, status_id, shipper_id) VALUES (%s, %s, %s)"""
+            insert_order_query = """INSERT INTO orders (customer_id, order_time, status_id, shipper_id) VALUES (%s, %s, %s, %s)"""
+            date_time_now = datetime.now(timezone.utc)
             try:
-                cur.execute(insert_order_query, (customer_id, 1, 1,))
+                cur.execute(insert_order_query, (customer_id, date_time_now, 1, 1,))
                 print('Успешно добавил')
             except Exception as ex:
                 logger.info(ex)
