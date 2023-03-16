@@ -190,4 +190,22 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.order_detail
     OWNER to postgres;
 
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION new_order_trigger() RETURNS trigger as $$
+  DECLARE
+  BEGIN
+    PERFORM pg_notify('sign_ups', row_to_json(NEW)::text );
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER data_modified
+  AFTER INSERT ON orders
+  FOR EACH ROW
+  EXECUTE PROCEDURE new_order_trigger();
 """
