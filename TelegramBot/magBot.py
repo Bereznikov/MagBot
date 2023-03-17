@@ -2,6 +2,9 @@ import logging
 import psycopg2
 import psycopg2.extras
 import random
+import copy
+from pprint import pprint
+from functools import partial
 from datetime import datetime, timezone
 from key import key
 from db_password import host, password_railway
@@ -32,7 +35,7 @@ START_STATE = {
 
 
 async def start(update, context):
-    USERS[update.effective_user.id] = START_STATE
+    USERS[update.effective_user.id] = copy.deepcopy(START_STATE)
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Добро пожаловать в бот для покупки вещей ЯБерезка, {update.effective_user.username} \n"
@@ -63,7 +66,7 @@ async def shop_name(update, context):
     USERS[user.id]['shop'] = update.message.text
     reply_keyboard = [["Мужчины 👨", "Женщины 👩"], ["Мальчики 👦", "Девочки 👧", "Малыши 👶"]]
     if update.message.text == "Next":
-        reply_keyboard[1].append("Для дома")
+        reply_keyboard[1].append("Для дома 🏠")
     await update.message.reply_text(
         'Отлично, теперь скажите для кого ищете одежду?',
         reply_markup=ReplyKeyboardMarkup(
@@ -82,32 +85,32 @@ async def you_stupid(update, context):
     return SELECTION
 
 
-async def category_name(update, context):
+async def category_name(update, context, conn):
     user = update.message.from_user
     USERS[user.id]['section'] = update.message.text[:-2]
     logger.info("%s выбрал секцию: %s", user.first_name, USERS[user.id]['section'])
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
-        conn.autocommit = True
-        with conn.cursor() as cur:
-            store_name = USERS[user.id]['shop']
-            section_name = USERS[user.id]['section']
-            popular_categories_query = """SELECT category_name
+    # with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+    #                       password=password_railway) as conn:
+    conn.autocommit = True
+    with conn.cursor() as cur:
+        store_name = USERS[user.id]['shop']
+        section_name = USERS[user.id]['section']
+        popular_categories_query = """SELECT category_name
                                             FROM product_full_info
                                             WHERE shop_name = %s AND section_name = %s
                                             GROUP BY category_name
                                             ORDER BY COUNT(*) DESC
                                             """
-            cur.execute(popular_categories_query, (store_name, section_name))
-            _tmp = cur.fetchall()
-            _popular_categories = [a[0].title() for a in _tmp[:12]]
-            popular_categories = [_popular_categories[:3], _popular_categories[3: 6],
-                                  _popular_categories[6:9], _popular_categories[9:]]
-            await update.message.reply_text(
-                'Хорошо, а из какой категории товаров?',
-                reply_markup=ReplyKeyboardMarkup(
-                    popular_categories, resize_keyboard=True,
-                    input_field_placeholder="категория"))
+        cur.execute(popular_categories_query, (store_name, section_name))
+        _tmp = cur.fetchall()
+        _popular_categories = [a[0].title() for a in _tmp[:12]]
+        popular_categories = [_popular_categories[:3], _popular_categories[3: 6],
+                              _popular_categories[6:9], _popular_categories[9:]]
+        await update.message.reply_text(
+            'Хорошо, а из какой категории товаров?',
+            reply_markup=ReplyKeyboardMarkup(
+                popular_categories, resize_keyboard=True,
+                input_field_placeholder="категория"))
 
     return CATEGORY
 
@@ -135,7 +138,7 @@ async def woman_dress(update, context):
                                                         f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
 
 
-async def show_product(update, context):
+async def show_product(update, context, conn):
     user = update.message.from_user
     USERS[user.id]['current_product_id'] = None
     if update.message.text not in ('➡', '⬅'):
@@ -167,43 +170,40 @@ async def show_product(update, context):
         )
         return SELECTION
 
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
-        conn.autocommit = True
-        with conn.cursor() as cur:
-            store_name = USERS[user.id]['shop']
-            section_name = USERS[user.id]['section']
-            category_name = USERS[user.id]['category']
-            select_query = """SELECT product_link, image_link, product_name, price, product_id
+    with conn.cursor() as cur:
+        store_name = USERS[user.id]['shop']
+        section_name = USERS[user.id]['section']
+        category_name = USERS[user.id]['category']
+        select_query = """SELECT product_link, image_link, product_name, price, product_id
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
                             ORDER BY product_id
                             LIMIT 50"""
-            cur.execute(select_query, (store_name, section_name, category_name,))
-            records = cur.fetchall()
-            USERS[user.id]['product_from_category'] = []
-            for number, record in enumerate(records):
-                product_link, image_link, product_name, price, product_id = record
-                USERS[user.id]['product_from_category'].append({
-                    'product_id': product_id,
-                    'product_name': product_name.capitalize(),
-                    'price': price,
-                    'image_link': image_link,
-                    'product_link': product_link
-                })
-        image_link = USERS[user.id]['product_from_category'][0]['image_link']
-        product_name = USERS[user.id]['product_from_category'][0]['product_name']
-        price = USERS[user.id]['product_from_category'][0]['price']
-        product_link = USERS[user.id]['product_from_category'][0]['product_link']
-        logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
+        cur.execute(select_query, (store_name, section_name, category_name,))
+        records = cur.fetchall()
+        USERS[user.id]['product_from_category'] = []
+        for number, record in enumerate(records):
+            product_link, image_link, product_name, price, product_id = record
+            USERS[user.id]['product_from_category'].append({
+                'product_id': product_id,
+                'product_name': product_name.capitalize(),
+                'price': price,
+                'image_link': image_link,
+                'product_link': product_link
+            })
+    image_link = USERS[user.id]['product_from_category'][0]['image_link']
+    product_name = USERS[user.id]['product_from_category'][0]['product_name']
+    price = USERS[user.id]['product_from_category'][0]['price']
+    product_link = USERS[user.id]['product_from_category'][0]['product_link']
+    logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
 
-        # text = f"<a href='{image_link}'>картинка</a>"
-        await update.message.reply_markdown_v2(
-            text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
-            reply_markup=ReplyKeyboardMarkup(reply_keyboard,
-                                             resize_keyboard=True),
-        )
-        return SELECTION
+    # text = f"<a href='{image_link}'>картинка</a>"
+    await update.message.reply_markdown_v2(
+        text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard,
+                                         resize_keyboard=True),
+    )
+    return SELECTION
 
 
 async def add_product(update, context):
@@ -220,7 +220,6 @@ async def add_product(update, context):
     # cur.execute(select_query, (product_id,))
     # product_name, product_id, product_link, price = cur.fetchone()
     # product_name = product_name.capitalize()
-
 
     logger.info("%s добавил в корзину %s", user.first_name, product_name)
     if not USERS[user.id]['cart']:
@@ -264,6 +263,7 @@ async def checkout(update, context):
                                     f'Общая стоимость: {total_price} Тенге \n\n'
                                     f'{cart}',
                                     reply_markup=ReplyKeyboardMarkup([['Выбрать заново']], resize_keyboard=True))
+
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
@@ -292,6 +292,8 @@ async def checkout(update, context):
 
 
 if __name__ == '__main__':
+    conn = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                            password=password_railway)
     application = ApplicationBuilder().token(key).build()
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -299,12 +301,12 @@ if __name__ == '__main__':
             SHOP: [MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
                    MessageHandler(filters.Regex("^(От тети Глаши)$"), you_stupid)],
             SECTION: [
-                MessageHandler(filters.Regex("^(Мужчины 👨|Женщины 👩|Девочки 👧|Мальчики 👦|Малыши 👶|Для дома)$"),
-                               category_name)],
-            CATEGORY: [MessageHandler(filters.TEXT, show_product)],
+                MessageHandler(filters.Regex("^(Мужчины 👨|Женщины 👩|Девочки 👧|Мальчики 👦|Малыши 👶|Для дома 🏠)$"),
+                               partial(category_name, conn=conn))],
+            CATEGORY: [MessageHandler(filters.TEXT, partial(show_product, conn=conn))],
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), checkout),
                         MessageHandler(filters.Regex("^(Добавить в корзину)$"), add_product),
-                        MessageHandler(filters.Regex("^(➡|⬅)$"), show_product),
+                        MessageHandler(filters.Regex("^(➡|⬅)$"), partial(show_product, conn=conn)),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
             # RESTART: [MessageHandler(filters.TEXT, restart)]
             # DATABASE: [MessageHandler(, random_product)]
