@@ -12,6 +12,7 @@ class Parser:
         self._section_links = []
         self._section_names = ['Девочки', 'Мальчики', 'Для малышей', 'Женщины', "Мужчины", "Для дома"]
         self.result = []
+        self.id_set = set()
     @staticmethod
     def making_soup_txt(url):
         ua = UserAgent()
@@ -91,7 +92,6 @@ class Parser:
             res = self.normal_chek(url, soup)
         return res
 
-
     async def get_data(self, session, info_pair, counter):
         result = []
         section_name = self._section_names[counter]
@@ -100,7 +100,7 @@ class Parser:
         for i in range(1, 826):
                 pagen_url = url.strip('-0') + '?p=' + str(i)
                 async with session.get(url=pagen_url) as response:
-                    resp = await response.text
+                    resp = await response.text()
                     page_soup = BeautifulSoup(resp, 'lxml')
                     items = page_soup.find('div',
                                            "MuiGrid-root MuiGrid-container plp-product-grid-wrapper plp-1s9f1m4").find_all(
@@ -147,11 +147,16 @@ class Parser:
                                             'image_path': image, 'availability': 'in_stock',
                                             'section_name': section_name,
                                             'category_name': category_name}
-                            result.append(good_dict)
+                            if good_dict['id'] not in self.id_set:
+                                result.append(good_dict)
+                                self.id_set.add(good_dict['id'])
+                            else:
+                                continue
+                        with open('next.json', 'a', encoding='utf-8') as file:
+                            json.dump(result, file, indent=4, ensure_ascii=False)
                     else:
                         break
-                    with open('next.json', 'a', encoding='utf-8') as file:
-                        json.dump(result, file, indent=4, ensure_ascii=False)
+
 
     async def main(self):
         counter = 0
@@ -171,14 +176,28 @@ class Parser:
         soup = self.making_soup_txt(url)
         sections = self.get_url_sections(soup)
         self._section_links = sections
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.run(self.main())
 
-
-
+def make_next_json_with_category_id():
+    with open('next.json', 'r', encoding='utf-8') as file:
+        next_product = json.load(file)
+    with open('next_categories_redacted.json', 'r', encoding='utf-8') as file:
+        next_categories = json.load(file)
+    next_categories_dict = {}
+    for category in next_categories:
+        next_categories_dict[category['subcategory'], category['category']] = category['id']
+    for product in next_product:
+        if next_categories_dict.get((product['category_name'].upper(), product['section_name'].upper())):
+            product['category_id'] =\
+                next_categories_dict.get((product['category_name'].upper(), product['section_name'].upper()))
+    with open('next_updated.json', "w", encoding='utf-8') as file:
+        json.dump(next_product, file, indent=4, ensure_ascii=False)
 
 if __name__ == '__main__':
     parse_site = Parser()
     parse_site('https://www.nextdirect.com/kz/ru')
-
+    make_next_json_with_category_id()
 
 # urlmain = 'https://www.nextdirect.com/kz/ru'
 # soupmain = makingsouptxt(urlmain)
