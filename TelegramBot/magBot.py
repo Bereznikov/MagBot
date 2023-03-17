@@ -26,6 +26,7 @@ START_STATE = {
     'category': None,
     'number': 1,
     'cart': None,
+    'products_from_category': None,
     'current_product_id': None
 }
 
@@ -140,11 +141,32 @@ async def show_product(update, context):
     if update.message.text not in ('➡', '⬅'):
         USERS[user.id]['category'] = update.message.text.upper()
         USERS[user.id]['number'] = 1
+        USERS[user.id]['product_from_category'] = None
     elif update.message.text == '➡':
         USERS[user.id]['number'] += 1
     elif USERS[user.id]['number'] > 1:
         USERS[user.id]['number'] -= 1
     logger.info("%s начал искать: %s", user.first_name, USERS[user.id]['category'])
+    reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить в корзину']]
+
+    if USERS[user.id]['number'] > 1:
+        reply_keyboard[0].insert(0, '⬅')
+    if USERS[user.id]['cart']:
+        reply_keyboard.append(['Оформить заказ'])
+
+    if USERS[user.id]['product_from_category']:
+        number = USERS[user.id]['number'] - 1
+        image_link = USERS[user.id]['product_from_category'][number]['image_link']
+        product_name = USERS[user.id]['product_from_category'][number]['product_name']
+        price = USERS[user.id]['product_from_category'][number]['price']
+        product_link = USERS[user.id]['product_from_category'][number]['product_link']
+        await update.message.reply_markdown_v2(
+            text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard,
+                                             resize_keyboard=True),
+        )
+        return SELECTION
+
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
@@ -156,39 +178,50 @@ async def show_product(update, context):
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
                             ORDER BY product_id
-                            LIMIT 1 OFFSET %s"""
-            cur.execute(select_query, (store_name, section_name, category_name, USERS[user.id]['number']))
-            product_link, image_link, product_name, price, product_id = cur.fetchone()
-            USERS[user.id]['current_product_id'] = product_id
-            product_name = product_name.capitalize()
-            reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить в корзину']]
-            if USERS[user.id]['number'] > 1:
-                reply_keyboard[0].insert(0, '⬅')
-            if USERS[user.id]['cart']:
-                reply_keyboard.append(['Оформить заказ'])
-            logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
-            # text = f"<a href='{image_link}'>картинка</a>"
-            await update.message.reply_markdown_v2(
-                text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
-                reply_markup=ReplyKeyboardMarkup(reply_keyboard,
-                                                 resize_keyboard=True),
-            )
-            return SELECTION
+                            LIMIT 50"""
+            cur.execute(select_query, (store_name, section_name, category_name,))
+            records = cur.fetchall()
+            USERS[user.id]['product_from_category'] = []
+            for number, record in enumerate(records):
+                product_link, image_link, product_name, price, product_id = record
+                USERS[user.id]['product_from_category'].append({
+                    'product_id': product_id,
+                    'product_name': product_name.capitalize(),
+                    'price': price,
+                    'image_link': image_link,
+                    'product_link': product_link
+                })
+        image_link = USERS[user.id]['product_from_category'][0]['image_link']
+        product_name = USERS[user.id]['product_from_category'][0]['product_name']
+        price = USERS[user.id]['product_from_category'][0]['price']
+        product_link = USERS[user.id]['product_from_category'][0]['product_link']
+        logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
+
+        # text = f"<a href='{image_link}'>картинка</a>"
+        await update.message.reply_markdown_v2(
+            text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard,
+                                             resize_keyboard=True),
+        )
+        return SELECTION
 
 
 async def add_product(update, context):
     user = update.message.from_user
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
-        conn.autocommit = True
-        with conn.cursor() as cur:
-            product_id = USERS[user.id]['current_product_id']
-            select_query = """SELECT product_name, product_id, product_link, price
-                                                    FROM product_full_info
-                                                    WHERE product_id = %s"""
-            cur.execute(select_query, (product_id,))
-            product_name, product_id, product_link, price = cur.fetchone()
-            product_name = product_name.capitalize()
+    number = USERS[user.id]['number']
+    product_id = USERS[user.id]['product_from_category'][number]['product_id']
+    product_name = USERS[user.id]['product_from_category'][number]['product_name']
+    price = USERS[user.id]['product_from_category'][number]['price']
+    product_link = USERS[user.id]['product_from_category'][number]['product_link']
+
+    # select_query = """SELECT product_name, product_id, product_link, price
+    #                                         FROM product_full_info
+    #                                         WHERE product_id = %s"""
+    # cur.execute(select_query, (product_id,))
+    # product_name, product_id, product_link, price = cur.fetchone()
+    # product_name = product_name.capitalize()
+
+
     logger.info("%s добавил в корзину %s", user.first_name, product_name)
     if not USERS[user.id]['cart']:
         USERS[user.id]['cart'] = {}
