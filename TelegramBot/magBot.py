@@ -1,4 +1,6 @@
 import logging
+import time
+
 import psycopg2
 import psycopg2.extras
 import random
@@ -85,13 +87,37 @@ async def you_stupid(update, context):
     return SELECTION
 
 
+class PostgresConnection:
+    def __init__(self):
+        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                                      password=password_railway)
+        connection.autocommit = True
+        self.connection = connection
+
+    def update(self):
+        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                                      password=password_railway)
+        connection.autocommit = True
+        self.connection = connection
+
+
+def make_connection():
+    conn = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                            password=password_railway)
+    conn.autocommit = True
+    return conn
+
+
 async def category_name(update, context, conn):
+    print(conn.connection, conn.connection.closed)
+    if conn.connection.closed != 0:
+        conn.update()
+    conn = conn.connection
     user = update.message.from_user
     USERS[user.id]['section'] = update.message.text[:-2]
     logger.info("%s выбрал секцию: %s", user.first_name, USERS[user.id]['section'])
     # with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
     #                       password=password_railway) as conn:
-    conn.autocommit = True
     with conn.cursor() as cur:
         store_name = USERS[user.id]['shop']
         section_name = USERS[user.id]['section']
@@ -139,6 +165,10 @@ async def woman_dress(update, context):
 
 
 async def show_product(update, context, conn):
+    print(conn.connection, conn.connection.closed)
+    if conn.connection.closed != 0:
+        conn.update()
+    conn = conn.connection
     user = update.message.from_user
     USERS[user.id]['current_product_id'] = None
     if update.message.text not in ('➡', '⬅'):
@@ -292,8 +322,8 @@ async def checkout(update, context):
 
 
 if __name__ == '__main__':
-    conn = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                            password=password_railway)
+    conn = PostgresConnection()
+    print(conn.connection)
     application = ApplicationBuilder().token(key).build()
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
