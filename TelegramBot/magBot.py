@@ -25,7 +25,8 @@ START_STATE = {
     'section': None,
     'category': None,
     'number': 1,
-    'cart': None
+    'cart': None,
+    'current_product_id': None
 }
 
 
@@ -133,8 +134,9 @@ async def woman_dress(update, context):
                                                         f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
 
 
-async def random_product(update, context):
+async def show_product(update, context):
     user = update.message.from_user
+    USERS[user.id]['current_product_id'] = None
     if update.message.text not in ('➡', '⬅'):
         USERS[user.id]['category'] = update.message.text.upper()
         USERS[user.id]['number'] = 1
@@ -150,29 +152,21 @@ async def random_product(update, context):
             store_name = USERS[user.id]['shop']
             section_name = USERS[user.id]['section']
             category_name = USERS[user.id]['category']
-            # count_query = """SELECT COUNT(*)
-            #                 FROM product_full_info
-            #                 WHERE shop_name = %s AND section_name = %s AND category_name = %s"""
-            # cur.execute(count_query, (store_name, section_name, category_name))
-            # number_of_products = cur.fetchone()[0]
-            # print(number_of_products)
-            # if not number_of_products:
-            #     return SELECTION
-            # rand_product = random.randint(1, number_of_products)
-            select_query = """SELECT product_link, image_link, product_name, price
+            select_query = """SELECT product_link, image_link, product_name, price, product_id
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
                             ORDER BY product_id
                             LIMIT 1 OFFSET %s"""
             cur.execute(select_query, (store_name, section_name, category_name, USERS[user.id]['number']))
-            product_link, image_link, product_name, price = cur.fetchone()
+            product_link, image_link, product_name, price, product_id = cur.fetchone()
+            USERS[user.id]['current_product_id'] = product_id
             product_name = product_name.capitalize()
             reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить в корзину']]
             if USERS[user.id]['number'] > 1:
                 reply_keyboard[0].insert(0, '⬅')
             if USERS[user.id]['cart']:
                 reply_keyboard.append(['Оформить заказ'])
-            logger.info("%s рассматривает %s", user.first_name, product_name)
+            logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
             # text = f"<a href='{image_link}'>картинка</a>"
             await update.message.reply_markdown_v2(
                 text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
@@ -188,15 +182,11 @@ async def add_product(update, context):
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            store_name = USERS[user.id]['shop']
-            section_name = USERS[user.id]['section']
-            category_name = USERS[user.id]['category']
+            product_id = USERS[user.id]['current_product_id']
             select_query = """SELECT product_name, product_id, product_link, price
-                                        FROM product_full_info
-                                        WHERE shop_name = %s AND section_name = %s AND category_name = %s
-                                        ORDER BY product_id
-                                        LIMIT 1 OFFSET %s"""
-            cur.execute(select_query, (store_name, section_name, category_name, USERS[user.id]['number']))
+                                                    FROM product_full_info
+                                                    WHERE product_id = %s"""
+            cur.execute(select_query, (product_id,))
             product_name, product_id, product_link, price = cur.fetchone()
             product_name = product_name.capitalize()
     logger.info("%s добавил в корзину %s", user.first_name, product_name)
@@ -278,10 +268,10 @@ if __name__ == '__main__':
             SECTION: [
                 MessageHandler(filters.Regex("^(Мужчины 👨|Женщины 👩|Девочки 👧|Мальчики 👦|Малыши 👶|Для дома)$"),
                                category_name)],
-            CATEGORY: [MessageHandler(filters.TEXT, random_product)],
+            CATEGORY: [MessageHandler(filters.TEXT, show_product)],
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), checkout),
                         MessageHandler(filters.Regex("^(Добавить в корзину)$"), add_product),
-                        MessageHandler(filters.Regex("^(➡|⬅)$"), random_product),
+                        MessageHandler(filters.Regex("^(➡|⬅)$"), show_product),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
             # RESTART: [MessageHandler(filters.TEXT, restart)]
             # DATABASE: [MessageHandler(, random_product)]
