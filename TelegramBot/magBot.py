@@ -13,6 +13,7 @@ from db_password import host, password_railway
 from telegram import *
 # Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import *
+from db_connection import PostgresConnection
 
 # ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -83,22 +84,8 @@ async def you_stupid(update, context):
     await update.message.reply_text(
         f"Ха-ха, такого магазина нет, {user.first_name}. Ну ты и дурачок... \n",
         reply_markup=ReplyKeyboardMarkup(
-            [['Выбрать заново']], one_time_keyboard=True, resize_keyboard=True))
+            [['Выбрать заново']], resize_keyboard=True))
     return SELECTION
-
-
-class PostgresConnection:
-    def __init__(self):
-        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                                      password=password_railway)
-        connection.autocommit = True
-        self.connection = connection
-
-    def update(self):
-        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                                      password=password_railway)
-        connection.autocommit = True
-        self.connection = connection
 
 
 def make_connection():
@@ -110,8 +97,7 @@ def make_connection():
 
 async def category_name(update, context, conn):
     print(conn.connection, conn.connection.closed)
-    if conn.connection.closed != 0:
-        conn.update()
+    conn.check_connection()
     conn = conn.connection
     user = update.message.from_user
     USERS[user.id]['section'] = update.message.text[:-2]
@@ -166,8 +152,7 @@ async def woman_dress(update, context):
 
 async def show_product(update, context, conn):
     print(conn.connection, conn.connection.closed)
-    if conn.connection.closed != 0:
-        conn.update()
+    conn.check_connection()
     conn = conn.connection
     user = update.message.from_user
     USERS[user.id]['current_product_id'] = None
