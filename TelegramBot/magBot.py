@@ -206,7 +206,7 @@ async def show_product(update, context):
 async def add_product(update, context):
     user = update.message.from_user
     customer = context.user_data[user.id]
-    number = customer.number
+    number = customer.number - 1
     product_id = customer.product_from_category[number]['product_id']
     product_name = customer.product_from_category[number]['product_name']
     price = customer.product_from_category[number]['price']
