@@ -1,3 +1,24 @@
+class ActiveCustomers:
+    def __init__(self, connection):
+        self.customers = None
+        self.connection = connection
+
+    def __str__(self):
+        if self.customers is None:
+            return 'Покупателей нет'
+        else:
+            return '\n'.join([str(c) for c in self.customers])
+
+    def add_customer(self, customer):
+        if self.customers is None:
+            self.customers = {customer.id: customer}
+        else:
+            self.customers[customer.id] = customer
+
+    def delete_customer(self, customer):
+        self.customers.pop(customer.id, None)
+
+
 class Customer:
     def __init__(self, customer_id, first_name, last_name, username, phone=None, country=None):
         self.id = customer_id
@@ -6,10 +27,11 @@ class Customer:
         self.username = username
         self.phone = phone
         self.country = country
+        self.state = None
         self.cart = None
 
     def __str__(self):
-        return f"{self.id} {self.username} {self.first_name} {self.last_name}"
+        return f"{self.id} {self.username} {self.first_name} {self.last_name} {self.state}"
 
     def go_shopping(self):
         self.cart = []

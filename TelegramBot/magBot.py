@@ -1,11 +1,12 @@
 import logging
-import time
-
+import asyncio
+# import time
+from customer import Customer, ActiveCustomers
 import psycopg2
 import psycopg2.extras
 import random
 import copy
-from pprint import pprint
+# from pprint import pprint
 from functools import partial
 from datetime import datetime, timezone
 from key import key
@@ -37,11 +38,14 @@ START_STATE = {
 }
 
 
-async def start(update, context):
-    USERS[update.effective_user.id] = copy.deepcopy(START_STATE)
+async def start(update, context, active_customers):
+    user = update.effective_user
+    new_customer = Customer(user.id, user.first_name, user.last_name, user.username)
+    new_customer.state = copy.deepcopy(START_STATE)
+    active_customers.add_customer(new_customer)
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
-        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {update.effective_user.username} \n"
+        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {new_customer.username} \n"
         "Из какого магазина хотите заказать одежду?",
         reply_markup=ReplyKeyboardMarkup(
             keyboard=reply_keyboard, resize_keyboard=True,
@@ -51,7 +55,9 @@ async def start(update, context):
     return SHOP
 
 
-async def restart(update, context):
+async def restart(update, context, active_customers):
+    user = update.effective_user
+    active_customers.customers[user.id].state = copy.deepcopy(START_STATE)
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
@@ -63,10 +69,10 @@ async def restart(update, context):
     return SHOP
 
 
-async def shop_name(update, context):
+async def shop_name(update, context, active_customers):
     user = update.message.from_user
     logger.info("Shop name %s: %s", user.first_name, update.message.text)
-    USERS[user.id]['shop'] = update.message.text
+    active_customers.customers[user.id].state['shop'] = update.message.text
     reply_keyboard = [["Мужчины 👨", "Женщины 👩"], ["Мальчики 👦", "Девочки 👧", "Малыши 👶"]]
     if update.message.text == "Next":
         reply_keyboard[1].append("Для дома 🏠")
@@ -82,31 +88,27 @@ async def you_stupid(update, context):
     user = update.message.from_user
     logger.info("%s попался на тетю Глашу, вот лошара", user.first_name)
     await update.message.reply_text(
-        f"Ха-ха, такого магазина нет, {user.first_name}. Ну ты и дурачок... \n",
+        f"Ну сколько можно тыкать на Глашу, {user.first_name}? Ты точно нужным делом занимаешься?... \n",
         reply_markup=ReplyKeyboardMarkup(
             [['Выбрать заново']], resize_keyboard=True))
     return SELECTION
 
 
-def make_connection():
-    conn = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                            password=password_railway)
-    conn.autocommit = True
-    return conn
-
-
-async def category_name(update, context, conn):
-    print(conn.connection, conn.connection.closed)
-    conn.check_connection()
-    conn = conn.connection
+async def category_name(update, context, active_customers):
+    active_customers.connection.check_connection()
+    pg_connection = active_customers.connection
     user = update.message.from_user
-    USERS[user.id]['section'] = update.message.text[:-2]
-    logger.info("%s выбрал секцию: %s", user.first_name, USERS[user.id]['section'])
+
+    customer = active_customers.customers[user.id]
+
+    customer.state['section'] = update.message.text[:-2]
+    active_customers.customers[user.id] = customer
+    logger.info("%s выбрал секцию: %s", user.first_name, customer.state['section'])
     # with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
     #                       password=password_railway) as conn:
-    with conn.cursor() as cur:
-        store_name = USERS[user.id]['shop']
-        section_name = USERS[user.id]['section']
+    with pg_connection.connection.cursor() as cur:
+        store_name = customer.state['shop']
+        section_name = customer.state['section']
         popular_categories_query = """SELECT category_name
                                             FROM product_full_info
                                             WHERE shop_name = %s AND section_name = %s
@@ -150,34 +152,39 @@ async def woman_dress(update, context):
                                                         f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
 
 
-async def show_product(update, context, conn):
-    print(conn.connection, conn.connection.closed)
-    conn.check_connection()
-    conn = conn.connection
+async def show_product(update, context, active_customers):
+    active_customers.connection.check_connection()
+    pg_connection = active_customers.connection
     user = update.message.from_user
-    USERS[user.id]['current_product_id'] = None
+
+    customer = active_customers.customers[user.id]
+
+    active_customers.customers[user.id].state['current_product_id'] = None
     if update.message.text not in ('➡', '⬅'):
-        USERS[user.id]['category'] = update.message.text.upper()
-        USERS[user.id]['number'] = 1
-        USERS[user.id]['product_from_category'] = None
+        customer.state['category'] = update.message.text.upper()
+        customer.state['number'] = 1
+        customer.state['product_from_category'] = None
     elif update.message.text == '➡':
-        USERS[user.id]['number'] += 1
-    elif USERS[user.id]['number'] > 1:
-        USERS[user.id]['number'] -= 1
-    logger.info("%s начал искать: %s", user.first_name, USERS[user.id]['category'])
+        customer.state['number'] += 1
+    elif customer.state['number'] > 1:
+        customer.state['number'] -= 1
+    logger.info("%s начал искать: %s", user.first_name, customer.state['category'])
+
+    active_customers.customers[user.id] = customer
+
     reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить в корзину']]
 
-    if USERS[user.id]['number'] > 1:
+    if customer.state['number'] > 1:
         reply_keyboard[0].insert(0, '⬅')
-    if USERS[user.id]['cart']:
+    if customer.state['cart']:
         reply_keyboard.append(['Оформить заказ'])
 
-    if USERS[user.id]['product_from_category']:
-        number = USERS[user.id]['number'] - 1
-        image_link = USERS[user.id]['product_from_category'][number]['image_link']
-        product_name = USERS[user.id]['product_from_category'][number]['product_name']
-        price = USERS[user.id]['product_from_category'][number]['price']
-        product_link = USERS[user.id]['product_from_category'][number]['product_link']
+    if customer.state['product_from_category']:
+        number = customer.state['number'] - 1
+        image_link = customer.state['product_from_category'][number]['image_link']
+        product_name = customer.state['product_from_category'][number]['product_name']
+        price = customer.state['product_from_category'][number]['price']
+        product_link = customer.state['product_from_category'][number]['product_link']
         await update.message.reply_markdown_v2(
             text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard,
@@ -185,10 +192,10 @@ async def show_product(update, context, conn):
         )
         return SELECTION
 
-    with conn.cursor() as cur:
-        store_name = USERS[user.id]['shop']
-        section_name = USERS[user.id]['section']
-        category_name = USERS[user.id]['category']
+    with pg_connection.connection.cursor() as cur:
+        store_name = customer.state['shop']
+        section_name = customer.state['section']
+        category_name = customer.state['category']
         select_query = """SELECT product_link, image_link, product_name, price, product_id
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
@@ -196,21 +203,23 @@ async def show_product(update, context, conn):
                             LIMIT 50"""
         cur.execute(select_query, (store_name, section_name, category_name,))
         records = cur.fetchall()
-        USERS[user.id]['product_from_category'] = []
+        customer.state['product_from_category'] = []
         for number, record in enumerate(records):
             product_link, image_link, product_name, price, product_id = record
-            USERS[user.id]['product_from_category'].append({
+            active_customers.customers[user.id].state['product_from_category'].append({
                 'product_id': product_id,
                 'product_name': product_name.capitalize(),
                 'price': price,
                 'image_link': image_link,
                 'product_link': product_link
             })
-    image_link = USERS[user.id]['product_from_category'][0]['image_link']
-    product_name = USERS[user.id]['product_from_category'][0]['product_name']
-    price = USERS[user.id]['product_from_category'][0]['price']
-    product_link = USERS[user.id]['product_from_category'][0]['product_link']
-    logger.info("%s рассматривает %s, %s", user.first_name, product_name, USERS[user.id]['current_product_id'])
+        active_customers.customers[user.id] = customer
+    image_link = customer.state['product_from_category'][0]['image_link']
+    product_name = customer.state['product_from_category'][0]['product_name']
+    price = customer.state['product_from_category'][0]['price']
+    product_link = customer.state['product_from_category'][0]['product_link']
+    logger.info("%s рассматривает %s, %s", user.first_name, product_name,
+                customer.state['current_product_id'])
 
     # text = f"<a href='{image_link}'>картинка</a>"
     await update.message.reply_markdown_v2(
@@ -221,59 +230,55 @@ async def show_product(update, context, conn):
     return SELECTION
 
 
-async def add_product(update, context):
+async def add_product(update, context, active_customers):
     user = update.message.from_user
-    number = USERS[user.id]['number']
-    product_id = USERS[user.id]['product_from_category'][number]['product_id']
-    product_name = USERS[user.id]['product_from_category'][number]['product_name']
-    price = USERS[user.id]['product_from_category'][number]['price']
-    product_link = USERS[user.id]['product_from_category'][number]['product_link']
-
-    # select_query = """SELECT product_name, product_id, product_link, price
-    #                                         FROM product_full_info
-    #                                         WHERE product_id = %s"""
-    # cur.execute(select_query, (product_id,))
-    # product_name, product_id, product_link, price = cur.fetchone()
-    # product_name = product_name.capitalize()
+    customer = active_customers.customers[user.id]
+    number = customer.state['number']
+    product_id = customer.state['product_from_category'][number]['product_id']
+    product_name = customer.state['product_from_category'][number]['product_name']
+    price = customer.state['product_from_category'][number]['price']
+    product_link = customer.state['product_from_category'][number]['product_link']
 
     logger.info("%s добавил в корзину %s", user.first_name, product_name)
-    if not USERS[user.id]['cart']:
-        USERS[user.id]['cart'] = {}
-    if product_id not in USERS[user.id]['cart']:
-        USERS[user.id]['cart'][product_id] = {'name': product_name,
+    if not customer.state['cart']:
+        customer.state['cart'] = {}
+    if product_id not in active_customers.customers[user.id].state['cart']:
+        customer.state['cart'][product_id] = {'name': product_name,
                                               'quantity': 1,
                                               'link': product_link,
                                               'price': price}
     else:
-        USERS[user.id]['cart'][product_id]['quantity'] += 1
+        customer.state['cart'][product_id]['quantity'] += 1
+    active_customers.customers[user.id] = customer
 
     reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить в корзину'], ['Оформить заказ']]
-    if USERS[user.id]['number'] > 1:
+    if customer.state['number'] > 1:
         reply_keyboard[0].insert(0, '⬅')
     await update.message.reply_text(f'Вы добавили {product_name} в корзину',
                                     reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True))
 
 
-async def checkout(update, context):
+async def checkout(update, context, active_customers):
     user = update.message.from_user
     customer_id = user.id
     first_name = user.first_name
     last_name = user.last_name
     username = user.username
-    logger.info("%s оформил заказ. Корзина: %s", user.first_name, USERS[user.id]['cart'])
+    logger.info("%s оформил заказ. Корзина: %s", user.first_name, active_customers.customers[user.id].state['cart'])
     cart_ar = []
     order_detail = []
     total_price = 0
-    for product in USERS[user.id]['cart']:
+    customer = active_customers.customers[user.id]
+    for product in customer.state['cart']:
         product_id = product
-        product = USERS[user.id]['cart'][product]
+        product = customer.state['cart'][product]
         order_detail.append((product_id, product["quantity"]))
         total_price += product["price"] * product['quantity']
         cart_ar.append(
             f'Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
             f'Товар: {product["link"]}')
     cart = '\n\n'.join(cart_ar)
-    USERS[user.id]['cart'] = None
+    active_customers.customers[user.id].state['cart'] = None
     await update.message.reply_text(f'Ваш заказ оформлен! \n'
                                     f'Общая стоимость: {total_price} Тенге \n\n'
                                     f'{cart}',
@@ -307,26 +312,37 @@ async def checkout(update, context):
 
 
 if __name__ == '__main__':
-    conn = PostgresConnection()
-    print(conn.connection)
+    connection = PostgresConnection()
+    active_customers = ActiveCustomers(connection)
+    # print(active_customers)
     application = ApplicationBuilder().token(key).build()
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[CommandHandler("start", partial(start, active_customers=active_customers))],
         states={
-            SHOP: [MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
-                   MessageHandler(filters.Regex("^(От тети Глаши)$"), you_stupid)],
+            SHOP: [
+                MessageHandler(filters.Regex("^(Zara|Next)$"), partial(shop_name, active_customers=active_customers)),
+                MessageHandler(filters.Regex("^(От тети Глаши)$"),
+                               partial(you_stupid, active_customers=active_customers))],
+
             SECTION: [
                 MessageHandler(filters.Regex("^(Мужчины 👨|Женщины 👩|Девочки 👧|Мальчики 👦|Малыши 👶|Для дома 🏠)$"),
-                               partial(category_name, conn=conn))],
-            CATEGORY: [MessageHandler(filters.TEXT, partial(show_product, conn=conn))],
-            SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), checkout),
-                        MessageHandler(filters.Regex("^(Добавить в корзину)$"), add_product),
-                        MessageHandler(filters.Regex("^(➡|⬅)$"), partial(show_product, conn=conn)),
-                        MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
-            # RESTART: [MessageHandler(filters.TEXT, restart)]
-            # DATABASE: [MessageHandler(, random_product)]
+                               partial(category_name, active_customers=active_customers))],
+
+            CATEGORY: [MessageHandler(filters.TEXT, partial(show_product, active_customers=active_customers))],
+
+            SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"),
+                                       partial(checkout, active_customers=active_customers)),
+
+                        MessageHandler(filters.Regex("^(Добавить в корзину)$"),
+                                       partial(add_product, active_customers=active_customers)),
+
+                        MessageHandler(filters.Regex("^(➡|⬅)$"),
+                                       partial(show_product, active_customers=active_customers)),
+
+                        MessageHandler(filters.Regex("^(Выбрать заново|)$"),
+                                       partial(restart, active_customers=active_customers))],
         },
-        fallbacks=[CommandHandler("start", start)]
+        fallbacks=[CommandHandler("start", partial(start, active_customers=active_customers))]
     )
 
     application.add_handler(conv_handler)
