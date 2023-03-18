@@ -1,5 +1,5 @@
 import logging
-import asyncio
+# import asyncio
 # import time
 from customer import Customer, ActiveCustomers
 import psycopg2
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART = range(6)
 
-USERS = {}
 START_STATE = {
     'shop': None,
     'section': None,
@@ -56,8 +55,6 @@ async def start(update, context, active_customers):
 
 
 async def restart(update, context, active_customers):
-    user = update.effective_user
-    active_customers.customers[user.id].state = copy.deepcopy(START_STATE)
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
@@ -153,8 +150,6 @@ async def woman_dress(update, context):
 
 
 async def show_product(update, context, active_customers):
-    active_customers.connection.check_connection()
-    pg_connection = active_customers.connection
     user = update.message.from_user
 
     customer = active_customers.customers[user.id]
@@ -191,7 +186,8 @@ async def show_product(update, context, active_customers):
                                              resize_keyboard=True),
         )
         return SELECTION
-
+    active_customers.connection.check_connection()
+    pg_connection = active_customers.connection
     with pg_connection.connection.cursor() as cur:
         store_name = customer.state['shop']
         section_name = customer.state['section']
@@ -312,15 +308,16 @@ async def checkout(update, context, active_customers):
 
 
 if __name__ == '__main__':
-    connection = PostgresConnection()
-    active_customers = ActiveCustomers(connection)
-    # print(active_customers)
+    connection_pool = PostgresConnection()
+    active_customers = ActiveCustomers(connection_pool)
     application = ApplicationBuilder().token(key).build()
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", partial(start, active_customers=active_customers))],
+        entry_points=[CommandHandler("start", partial(start, active_customers=active_customers)),
+                      CommandHandler("s", partial(start, active_customers=active_customers))],
         states={
             SHOP: [
-                MessageHandler(filters.Regex("^(Zara|Next)$"), partial(shop_name, active_customers=active_customers)),
+                MessageHandler(filters.Regex("^(Zara|Next)$"),
+                               partial(shop_name, active_customers=active_customers)),
                 MessageHandler(filters.Regex("^(От тети Глаши)$"),
                                partial(you_stupid, active_customers=active_customers))],
 
@@ -328,7 +325,8 @@ if __name__ == '__main__':
                 MessageHandler(filters.Regex("^(Мужчины 👨|Женщины 👩|Девочки 👧|Мальчики 👦|Малыши 👶|Для дома 🏠)$"),
                                partial(category_name, active_customers=active_customers))],
 
-            CATEGORY: [MessageHandler(filters.TEXT, partial(show_product, active_customers=active_customers))],
+            CATEGORY: [MessageHandler(filters.TEXT,
+                                      partial(show_product, active_customers=active_customers))],
 
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"),
                                        partial(checkout, active_customers=active_customers)),
