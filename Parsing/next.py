@@ -10,7 +10,7 @@ import json
 class Parser:
     def __init__(self):
         self._section_links = []
-        self._section_names = ['Девочки', 'Мальчики', 'Для малышей', 'Женщины', "Мужчины", "Для дома"]
+        self._section_names = ['ДЕВОЧКИ', 'МАЛЬЧИКИ', 'ДЛЯ МАЛЫШЕЙ', 'ЖЕНЩИНЫ', "МУЖЧИНЫ", "ДЛЯ ДОМА"]
         self.result = []
         self.id_set = set()
         self.result
@@ -155,7 +155,6 @@ class Parser:
                 else:
                     break
 
-
     async def main(self):
         counter = 0
         ua = UserAgent()
@@ -186,11 +185,10 @@ def make_next_json_with_category_id():
         next_categories = json.load(file)
     next_categories_dict = {}
     for category in next_categories:
-        next_categories_dict[category['category_name'], category['section_name']] = category['id']
+        next_categories_dict[category['subcategory']] = category['id']
     for product in next_product:
-        if next_categories_dict.get((product['category_name'].upper(), product['section_name'].upper())):
-            product['category_id'] =\
-                next_categories_dict.get((product['category_name'].upper(), product['section_name'].upper()))
+        if next_categories_dict.get(product['category_name'].upper()):
+            product['category_id'] = next_categories_dict.get(product['category_name'].upper())
     with open('next_updated.json', "w", encoding='utf-8') as file:
         json.dump(next_product, file, indent=4, ensure_ascii=False)
 
