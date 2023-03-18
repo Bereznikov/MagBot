@@ -24,7 +24,7 @@ class PostgresConnection:
 
     def simple_check(self):
         if self.connection.closed != 0:
-            self.connection.update()
+            self.update()
 
     def update(self):
         connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
