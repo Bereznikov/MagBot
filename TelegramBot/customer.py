@@ -20,18 +20,29 @@ class ActiveCustomers:
 
 
 class Customer:
-    def __init__(self, customer_id, first_name, last_name, username, phone=None, country=None):
+    def __init__(self, customer_id, first_name, last_name, username, phone=None, country=None, shop=None, section=None,
+                 category=None, number=1, cart=None, products_from_category=None, current_product_id=None,
+                 connection=None):
         self.id = customer_id
         self.first_name = first_name
         self.last_name = last_name
         self.username = username
         self.phone = phone
         self.country = country
-        self.state = None
-        self.cart = None
+
+        self.shop = shop
+        self.section = section
+        self.category = category
+        self.nuber = number
+        self.cart = cart
+        self.products_from_category = products_from_category
+        self.current_product_id = current_product_id
+
+        self.connection = connection
 
     def __str__(self):
-        return f"{self.id} {self.username} {self.first_name} {self.last_name} {self.state}"
+        return f"{self.id} {self.username} {self.first_name} {self.last_name} {self.shop} {self.section} " \
+               f"{self.category} {self.cart} {self.connection}"
 
     def go_shopping(self):
         self.cart = []

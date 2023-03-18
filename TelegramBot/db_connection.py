@@ -22,6 +22,10 @@ class PostgresConnection:
             print(ex)
             self.update()
 
+    def simple_check(self):
+        if self.connection.closed != 0:
+            self.connection.update()
+
     def update(self):
         connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                                       password=password_railway)

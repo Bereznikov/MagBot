@@ -8,3 +8,5 @@
 /Parsing/next_updated.json
 /Parsing/next_async.py
 /Parsing/new_next.json
+/TelegramBot/persistentbot.py
+/TelegramBot/pkl_open.py
