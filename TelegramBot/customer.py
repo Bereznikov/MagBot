@@ -22,7 +22,7 @@ class ActiveCustomers:
 class Customer:
     def __init__(self, customer_id, first_name, last_name, username, phone=None, country=None, shop=None, section=None,
                  category=None, number=1, cart=None, products_from_category=None, current_product_id=None,
-                 connection=None):
+                 connection=None, address=None, shipper=None):
         self.id = customer_id
         self.first_name = first_name
         self.last_name = last_name
@@ -37,6 +37,8 @@ class Customer:
         self.cart = cart
         self.products_from_category = products_from_category
         self.current_product_id = current_product_id
+        self.address = address
+        self.shipper = shipper
 
         self.connection = connection
 
