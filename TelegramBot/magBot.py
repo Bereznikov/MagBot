@@ -36,10 +36,8 @@ async def start(update, context):
     await update.message.reply_text(
         f"Добро пожаловать в бот для покупки вещей ЯБерезка, {new_customer.username} \n"
         "Из какого магазина хотите заказать одежду?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=reply_keyboard, resize_keyboard=True,
-            input_field_placeholder="Название магазина"
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True,
+                                         input_field_placeholder="Название магазина"),
     )
     return SHOP
 
@@ -48,10 +46,8 @@ async def restart(update, context):
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=reply_keyboard, resize_keyboard=True,
-            input_field_placeholder="название магазина"
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True,
+                                         input_field_placeholder="название магазина"),
     )
     return SHOP
 
@@ -202,8 +198,7 @@ async def show_product(update, context):
 
     await update.message.reply_markdown_v2(
         text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard,
-                                         resize_keyboard=True),
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True),
     )
     return SELECTION
 
@@ -245,7 +240,7 @@ async def checkout(update, context):
     cart_messages = []
     total_price = 0
     for product in customer.cart.values():
-        total_price += product["price"] * product['quantity']
+        total_price += product["price"] * product["quantity"]
         cart_messages.append(
             f'Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
             f'Товар: {product["link"]}')
@@ -265,7 +260,8 @@ async def checkout(update, context):
                             VALUES (%s, %s, %s, %s)"""
             cur.execute(insert_user_query, (customer.id, customer.first_name, customer.last_name, customer.username,))
 
-        insert_order_query = """INSERT INTO orders (customer_id, order_time, status_id, shipper_id) VALUES (%s, %s, %s, %s)"""
+        insert_order_query = """INSERT INTO orders (customer_id, order_time, status_id, shipper_id)
+         VALUES (%s, %s, %s, %s)"""
         date_time_now = datetime.now(timezone.utc)
         try:
             cur.execute(insert_order_query, (customer.id, date_time_now, 1, 1,))
