@@ -135,7 +135,6 @@ async def woman_dress(update, context):
 
 async def show_product(update, context):
     user = update.message.from_user
-    # customer = active_customers.customers[user.id]
     context.user_data[user.id].curret_product_id = None
     customer = context.user_data[user.id]
     if update.message.text not in ('➡', '⬅'):
@@ -155,13 +154,14 @@ async def show_product(update, context):
     if customer.cart:
         reply_keyboard.append(['Оформить заказ'])
 
-    if customer.product_from_category:
+    if customer.product_from_category and customer.number <= len(customer.product_from_category):
         number = customer.number - 1
         image_link = customer.product_from_category[number]['image_link']
         product_name = customer.product_from_category[number]['product_name']
         price = customer.product_from_category[number]['price']
         product_link = customer.product_from_category[number]['product_link']
-        logger.info("%s рассматривает %s, %s", user.first_name, product_name, customer.current_product_id)
+        product_id = customer.product_from_category[number]['product_id']
+        logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
         await update.message.reply_markdown_v2(
             text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard,
@@ -173,14 +173,20 @@ async def show_product(update, context):
         store_name = customer.shop
         section_name = customer.section
         category_name = customer.category
+        offset = 0
+        if customer.product_from_category:
+            offset = len(customer.product_from_category)
+
         select_query = """SELECT product_link, image_link, product_name, price, product_id
                             FROM product_full_info
                             WHERE shop_name = %s AND section_name = %s AND category_name = %s
                             ORDER BY product_id
-                            LIMIT 5"""
-        cur.execute(select_query, (store_name, section_name, category_name,))
+                            LIMIT 10
+                            OFFSET %s"""
+        cur.execute(select_query, (store_name, section_name, category_name, offset))
         records = cur.fetchall()
-        context.user_data[user.id].product_from_category = []
+        if not context.user_data[user.id].product_from_category:
+            context.user_data[user.id].product_from_category = []
         for number, record in enumerate(records):
             product_link, image_link, product_name, price, product_id = record
             context.user_data[user.id].product_from_category.append({
@@ -190,11 +196,10 @@ async def show_product(update, context):
                 'image_link': image_link,
                 'product_link': product_link
             })
-        customer = context.user_data[user.id]
     product_link, image_link, product_name, price, product_id = records[0]
-    logger.info("%s рассматривает %s, %s", user.first_name, product_name, customer.current_product_id)
+    product_name = product_name.capitalize()
+    logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
 
-    # text = f"<a href='{image_link}'>картинка</a>"
     await update.message.reply_markdown_v2(
         text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
         reply_markup=ReplyKeyboardMarkup(reply_keyboard,
@@ -212,7 +217,7 @@ async def add_product(update, context):
     price = customer.product_from_category[number]['price']
     product_link = customer.product_from_category[number]['product_link']
 
-    logger.info("%s добавил в корзину %s %s", user.first_name, product_id, product_name)
+    logger.info("%s добавил в корзину %s c id %s", user.first_name, product_name, product_id)
     if not customer.cart:
         customer.cart = {}
     if product_id not in customer.cart:
@@ -281,9 +286,10 @@ async def checkout(update, context):
 
 if __name__ == '__main__':
     # my_persistence = PicklePersistence(filepath='my_file.pkl')
-    # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
+    my_persistence = DictPersistence()
+    application = ApplicationBuilder().token(key).persistence(my_persistence).build()
 
-    application = ApplicationBuilder().token(key).build()
+    # application = ApplicationBuilder().token(key).build()
 
     conv_handler = ConversationHandler(
         entry_points=[
@@ -306,7 +312,7 @@ if __name__ == '__main__':
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
         },
         fallbacks=[CommandHandler("start", start)],
-        # persistent=True,
+        persistent=True,
         name='magbot',
     )
 
