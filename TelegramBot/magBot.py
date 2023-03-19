@@ -29,16 +29,16 @@ SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART = range(6)
 
 async def start(update, context):
     user = update.effective_user
-    pg_con = PostgresConnection()
-    new_customer = Customer(user.id, user.first_name, user.last_name, user.username, connection=pg_con)
-    context.user_data[user.id] = new_customer
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
-        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {new_customer.username} \n"
+        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {user.username} \n"
         "Из какого магазина хотите заказать одежду?",
         reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True,
                                          input_field_placeholder="Название магазина"),
     )
+    pg_con = PostgresConnection()
+    new_customer = Customer(user.id, user.first_name, user.last_name, user.username, connection=pg_con)
+    context.user_data[user.id] = new_customer
     return SHOP
 
 

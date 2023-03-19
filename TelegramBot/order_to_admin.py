@@ -12,7 +12,7 @@ from telegram.ext import *
 
 async def send_to_admin(username, order_id, order_time, bot):
     text = f'Покупатель с ником: @{username}\nCделал заказ № {order_id}\n' \
-           f'{order_time} по Гринвичу\n' \
+           f'{order_time}\n' \
            f'Полная информация в Базе данных.'
 
     await bot.send_message(text=text, chat_id=106683136)
@@ -29,13 +29,9 @@ async def main():
 
     while True:
         conn.poll()
-        check_query = \
-            """SELECT section_name
-            FROM section
-            WHERE section_id = 1"""
+        check_query = """SELECT 1"""
         cursor.execute(check_query)
-        zara = cursor.fetchone()[0]
-        print(zara)
+        print(cursor.fetchone()[0])
         for notify in conn.notifies:
             order = json.loads(notify.payload)
             customer_id = order["customer_id"]
@@ -43,9 +39,9 @@ async def main():
             order_time = order['order_time']
             order_time = f'Дата: {order_time[:10]} Время: {order_time[11:19]}'
             select_query = \
-            """SELECT username
-            FROM customer
-            WHERE customer_id = %s"""
+                """SELECT username
+                FROM customer
+                WHERE customer_id = %s"""
             cursor.execute(select_query, (customer_id,))
             username = cursor.fetchone()[0]
             print(username)
