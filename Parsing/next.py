@@ -13,7 +13,7 @@ class Parser:
         self._section_names = ['ДЕВОЧКИ', 'МАЛЬЧИКИ', 'ДЛЯ МАЛЫШЕЙ', 'ЖЕНЩИНЫ', "МУЖЧИНЫ", "ДЛЯ ДОМА"]
         self.result = []
         self.id_set = set()
-        self.result
+
     @staticmethod
     def making_soup_txt(url):
         ua = UserAgent()
@@ -170,6 +170,7 @@ class Parser:
             await asyncio.gather(*tasks)
         with open('next.json', 'w', encoding='utf-8') as file:
             json.dump(self.result, file, indent=4, ensure_ascii=False)
+
     def __call__(self, url, *args, **kwargs):
         soup = self.making_soup_txt(url)
         sections = self.get_url_sections(soup)
@@ -191,6 +192,7 @@ def make_next_json_with_category_id():
             product['category_id'] = next_categories_dict.get(product['category_name'].upper())
     with open('next_updated.json', "w", encoding='utf-8') as file:
         json.dump(next_product, file, indent=4, ensure_ascii=False)
+
 
 if __name__ == '__main__':
     parse_site = Parser()
