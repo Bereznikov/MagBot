@@ -169,13 +169,19 @@ async def show_product(update, context):
         customer.number += 1
     elif customer.number > 1:
         customer.number -= 1
-    context.user_data[user.id] = customer
+    # context.user_data[user.id] = customer
 
-    reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить']]
+    reply_keyboard = [["➡"],
+                      ['Добавить в корзину'],
+                      ['Выбрать заново']]
     if customer.number > 1:
         reply_keyboard[0].insert(0, '⬅')
+    if customer.cart and customer.product_from_category:
+        for i, product in enumerate(customer.cart):
+            if customer.product_from_category[customer.number - 1]['product_id'] == product['product_id']:
+                reply_keyboard[1] = ['➖', f"{customer.cart[i]['quantity']}", '➕']
     if customer.cart:
-        reply_keyboard.append(['Корзина'])
+        reply_keyboard[-1].append('Корзина')
 
     context.user_data[user.id].connection.simple_check()
     if customer.product_from_category is None or customer.number > len(customer.product_from_category):
@@ -223,11 +229,6 @@ async def show_product(update, context):
     cart_text = 'Корзина'
     if customer.cart and product_id in customer.cart:
         cart_text = f'Корзина {customer.cart[product_id]["quantity"]}'
-    keyboard = [
-        [InlineKeyboardButton("➕", callback_data='+'),
-         InlineKeyboardButton("➖", callback_data='-')],
-        [InlineKeyboardButton(cart_text, callback_data='Корзина')],
-    ]
 
     # await update.message.reply_markdown_v2(
     #     text=f"[l]({image_link}) [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})",
@@ -255,13 +256,19 @@ async def show_product_query(update, context):
     user = update.callback_query.from_user
 
     context.user_data[user.id].curret_product_id = None
-
     customer = context.user_data[user.id]
-    reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить']]
+
+    reply_keyboard = [["➡"],
+                      ['Добавить в корзину'],
+                      ['Выбрать заново']]
     if customer.number > 1:
         reply_keyboard[0].insert(0, '⬅')
     if customer.cart:
-        reply_keyboard.append(['Корзина'])
+        for i, product in enumerate(customer.cart):
+            if customer.product_from_category[customer.number - 1]['product_id'] == product['product_id']:
+                reply_keyboard[1] = ['➖', f"{customer.cart[i]['quantity']}", '➕']
+    if customer.cart:
+        reply_keyboard[-1].append('Корзина')
 
     number = customer.number - 1
     if customer.product_from_category is None:
@@ -275,7 +282,6 @@ async def show_product_query(update, context):
     product_name = product_name.capitalize()
 
     logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
-
 
     product_name = product_name.replace('-', '\-').replace('.', '\.')
     await update.callback_query.message.reply_photo(image_link,
@@ -302,10 +308,18 @@ async def add_product(update, context):
     logger.info("%s добавил в корзину %s c id %s", user.first_name, product_name, product_id)
     if not customer.cart:
         customer.cart = []
-    product_num = 0
+
+    deleted_from_cart = False
+
     for i, product in enumerate(customer.cart):
         if product['product_id'] == product_id:
-            customer.cart[i]['quantity'] += 1
+            if update.message.text == '➖':
+                customer.cart[i]['quantity'] -= 1
+                if customer.cart[i]['quantity'] <= 0:
+                    customer.cart.pop(i)
+                    deleted_from_cart = True
+            else:
+                customer.cart[i]['quantity'] += 1
             product_num = i
             break
     else:
@@ -317,24 +331,27 @@ async def add_product(update, context):
             'link': product_link,
             'image_link': image_link,
             'price': price})
-    context.user_data[user.id] = customer
 
-    reply_keyboard = [["➡"], ['Выбрать заново', f'Добавить {customer.cart[product_num]["quantity"]}'], ['Корзина']]
+    reply_keyboard = [["➡"],
+                      ['Добавить в корзину'],
+                      ['Выбрать заново']]
     if customer.number > 1:
         reply_keyboard[0].insert(0, '⬅')
+    if not deleted_from_cart and customer.cart[product_num]['quantity'] > 0:
+        reply_keyboard[1] = ['➖', f"{customer.cart[product_num]['quantity']}", '➕']
+    if customer.cart:
+        reply_keyboard[-1].append('Корзина')
     await update.message.reply_text(f'Вы добавили {product_name} в корзину',
                                     reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True))
 
 
 async def address(update, context):
-
     user = update.callback_query.from_user
     customer = context.user_data[user.id]
     logger.info("%s начал оформлять заказ. Корзина: %s", customer.first_name, customer.cart)
     reply_markup = ReplyKeyboardRemove()
     if customer.address:
         reply_markup = ReplyKeyboardMarkup([[customer.address]], resize_keyboard=True)
-    # await update.callback_query.send_message('Напишите адрес доставки', reply_markup=reply_markup)
     await update.callback_query.message.reply_text('Напишите адрес доставки', reply_markup=reply_markup)
     return ADDRESS
 
@@ -393,8 +410,7 @@ async def show_cart_message(update, context):
     ]
     product = customer.cart[customer.cart_position]
     cart_messages = (
-        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
-        f'Товар: {product["link"]}')
+        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n')
     await update.message.reply_photo(context.user_data[user.id].cart[0]["image_link"],
                                      caption=cart_messages, reply_markup=InlineKeyboardMarkup(reply_keyboard))
     return CART
@@ -413,6 +429,12 @@ async def show_cart_query(update, context):
     elif query.data == 'Num-':
         customer.cart[customer.cart_position]['quantity'] = max(customer.cart[customer.cart_position]['quantity'] - 1,
                                                                 0)
+        if customer.cart[customer.cart_position]['quantity'] == 0:
+            customer.cart.pop(customer.cart_position)
+            customer.cart_position = 0
+            if len(customer.cart) == 0:
+                await update.callback_query.message.reply_text('Корзина пуста, начнем заново? /restart')
+                return RESTART
 
     logger.info("%s смотрит корзину. Корзина: %s", customer.first_name, customer.cart)
 
@@ -434,8 +456,7 @@ async def show_cart_query(update, context):
     ]
     product = context.user_data[user.id].cart[customer.cart_position]
     cart_messages = (
-        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
-        f'Товар: {product["link"]}')
+        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n')
     await query.edit_message_media(
         InputMediaPhoto(context.user_data[user.id].cart[customer.cart_position]["image_link"]),
         reply_markup=InlineKeyboardMarkup(reply_keyboard))
@@ -487,14 +508,14 @@ async def checkout(update, context):
             cur.execute(select_order_id_query)
             order_id = cur.fetchone()[0]
             order_detail = []
-            for p_id, product in customer.cart.items():
-                order_detail.append((p_id, order_id, product["quantity"]))
+            for product in customer.cart:
+                order_detail.append((product['product_id'], order_id, product["quantity"]))
             insert_order_detail_query = """INSERT INTO order_detail (product_id, order_id, quantity)
              VALUES (%s, %s, %s)"""
             psycopg2.extras.execute_batch(cur, insert_order_detail_query, order_detail)
             context.user_data[user.id].cart = None
         except Exception as ex:
-            logger.info(ex)
+            logger.exception(ex)
 
     return SELECTION
 
@@ -511,6 +532,7 @@ if __name__ == '__main__':
             CommandHandler("start", start),
             CommandHandler("s", start)],
         states={
+            RESTART: [CommandHandler('restart', restart)],
             SHOP: [
                 # CallbackQueryHandler(shop_name, pattern="^(Zara|Next)$"),
                 MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
@@ -523,9 +545,9 @@ if __name__ == '__main__':
             CATEGORY: [MessageHandler(filters.TEXT, show_product)],
 
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), address),
-                        # CallbackQueryHandler(show_cart, pattern="^Корзина$"),
+                        CallbackQueryHandler(show_cart, pattern="^Num-$"),
                         MessageHandler(filters.Regex("^(Корзина)$"), show_cart_message),
-                        MessageHandler(filters.Regex("^(Добавить)"), add_product),
+                        MessageHandler(filters.Regex("^(Добавить|➕|➖)"), add_product),
                         MessageHandler(filters.Regex("^(➡|⬅|Закрыть корзину)$"), show_product),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart),
                         MessageHandler(filters.TEXT, show_product)],
