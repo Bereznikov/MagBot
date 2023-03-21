@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT = range(8)
+SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT, CART = range(9)
 
 
 # def facts_to_str(user_data):
@@ -241,12 +241,51 @@ async def show_product(update, context):
     # )
     product_name = product_name.replace('-', '\-').replace('.', '\.')
     await update.message.reply_photo(image_link,
-                                     caption=f"{product_name}\n{price}\n"
+                                     caption=f"{product_name}\n"
+                                             f"Цена: {price} Тенге\n"
                                              f"[Ссылка]({product_link})",
                                      parse_mode='MarkdownV2',
                                      reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True),
                                      # reply_markup=InlineKeyboardMarkup(keyboard)
                                      )
+    return SELECTION
+
+
+async def show_product_query(update, context):
+    user = update.callback_query.from_user
+
+    context.user_data[user.id].curret_product_id = None
+
+    customer = context.user_data[user.id]
+    reply_keyboard = [["➡"], ['Выбрать заново', 'Добавить']]
+    if customer.number > 1:
+        reply_keyboard[0].insert(0, '⬅')
+    if customer.cart:
+        reply_keyboard.append(['Корзина'])
+
+    number = customer.number - 1
+    if customer.product_from_category is None:
+        logger.exception("%s customer.product_from_category is None", user.first_name)
+        return SELECTION
+    image_link = customer.product_from_category[number]['image_link']
+    product_name = customer.product_from_category[number]['product_name']
+    price = customer.product_from_category[number]['price']
+    product_link = customer.product_from_category[number]['product_link']
+    product_id = customer.product_from_category[number]['product_id']
+    product_name = product_name.capitalize()
+
+    logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
+
+
+    product_name = product_name.replace('-', '\-').replace('.', '\.')
+    await update.callback_query.message.reply_photo(image_link,
+                                                    caption=f"{product_name}\n"
+                                                            f"Цена: {price} Тенге\n"
+                                                            f"[Ссылка]({product_link})",
+                                                    parse_mode='MarkdownV2',
+                                                    reply_markup=ReplyKeyboardMarkup(reply_keyboard,
+                                                                                     resize_keyboard=True),
+                                                    )
     return SELECTION
 
 
@@ -258,20 +297,29 @@ async def add_product(update, context):
     product_name = customer.product_from_category[number]['product_name']
     price = customer.product_from_category[number]['price']
     product_link = customer.product_from_category[number]['product_link']
+    image_link = customer.product_from_category[number]['image_link']
 
     logger.info("%s добавил в корзину %s c id %s", user.first_name, product_name, product_id)
     if not customer.cart:
-        customer.cart = {}
-    if product_id not in customer.cart:
-        customer.cart[product_id] = {'name': product_name,
-                                     'quantity': 1,
-                                     'link': product_link,
-                                     'price': price}
+        customer.cart = []
+    product_num = 0
+    for i, product in enumerate(customer.cart):
+        if product['product_id'] == product_id:
+            customer.cart[i]['quantity'] += 1
+            product_num = i
+            break
     else:
-        customer.cart[product_id]['quantity'] += 1
+        product_num = len(customer.cart)
+        customer.cart.append({
+            'product_id': product_id,
+            'name': product_name,
+            'quantity': 1,
+            'link': product_link,
+            'image_link': image_link,
+            'price': price})
     context.user_data[user.id] = customer
 
-    reply_keyboard = [["➡"], ['Выбрать заново', f'Добавить {customer.cart[product_id]["quantity"]}'], ['Корзина']]
+    reply_keyboard = [["➡"], ['Выбрать заново', f'Добавить {customer.cart[product_num]["quantity"]}'], ['Корзина']]
     if customer.number > 1:
         reply_keyboard[0].insert(0, '⬅')
     await update.message.reply_text(f'Вы добавили {product_name} в корзину',
@@ -279,17 +327,22 @@ async def add_product(update, context):
 
 
 async def address(update, context):
-    user = update.message.from_user
+
+    user = update.callback_query.from_user
     customer = context.user_data[user.id]
     logger.info("%s начал оформлять заказ. Корзина: %s", customer.first_name, customer.cart)
     reply_markup = ReplyKeyboardRemove()
     if customer.address:
         reply_markup = ReplyKeyboardMarkup([[customer.address]], resize_keyboard=True)
-    await update.message.reply_text('Напишите адрес доставки', reply_markup=reply_markup)
+    # await update.callback_query.send_message('Напишите адрес доставки', reply_markup=reply_markup)
+    await update.callback_query.message.reply_text('Напишите адрес доставки', reply_markup=reply_markup)
     return ADDRESS
 
 
 async def shipper(update, context):
+    # print("ТУТ")
+    # print(update.message)
+    # print(update.query)
     user = update.message.from_user
     context.user_data[user.id].address = update.message.text
     customer = context.user_data[user.id]
@@ -315,24 +368,82 @@ async def show_cart(update, context):
     return SELECTION
 
 
-async def show_cart_query(update, context):
+async def show_cart_message(update, context):
     user = update.message.from_user
-    cart_messages = []
-    logger.info("%s смотрит корзину. Корзина: %s", context.user_data[user.id].first_name,
-                context.user_data[user.id].cart)
+    context.user_data[user.id].cart_position = 0
+    customer = context.user_data[user.id]
+    await update.message.reply_text('Ваша корзина:', reply_markup=ReplyKeyboardRemove())
+    logger.info("%s смотрит корзину. Корзина: %s", customer.first_name, customer.cart)
 
-    reply_keyboard = [[InlineKeyboardButton("-", callback_data='-', ),
-                       InlineKeyboardButton("+", callback_data='+')],
-                      [InlineKeyboardButton("<-", callback_data='->'),
-                       InlineKeyboardButton(">", callback_data='>')]]
-    for product in context.user_data[user.id].cart.values():
-        cart_messages = (
-            f'Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
-            f'Товар: {product["link"]}')
-    await update.message.reply_text(
-        cart_messages, reply_markup=InlineKeyboardMarkup(reply_keyboard))
+    reply_keyboard = [
+        [
+            InlineKeyboardButton("➖", callback_data='Num-'),
+            InlineKeyboardButton(customer.cart[customer.cart_position]['quantity'], callback_data='Nothing'),
+            InlineKeyboardButton("➕", callback_data='Num+')
+        ],
+        [
+            InlineKeyboardButton("⬅", callback_data='Cart<'),
+            InlineKeyboardButton(f'1 из {len(customer.cart)}', callback_data='Nothing'),
+            InlineKeyboardButton("➡", callback_data='Cart>')
+        ],
+        [
+            InlineKeyboardButton("Оформить заказ", callback_data='Order'),
+            InlineKeyboardButton("Назад в меню", callback_data='Menu')
+        ]
+    ]
+    product = customer.cart[customer.cart_position]
+    cart_messages = (
+        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
+        f'Товар: {product["link"]}')
+    await update.message.reply_photo(context.user_data[user.id].cart[0]["image_link"],
+                                     caption=cart_messages, reply_markup=InlineKeyboardMarkup(reply_keyboard))
+    return CART
 
-    return SELECTION
+
+async def show_cart_query(update, context):
+    user = update.callback_query.from_user
+    customer = context.user_data[user.id]
+    query = update.callback_query
+    if query.data == 'Cart>':
+        customer.cart_position = min(customer.cart_position + 1, len(customer.cart) - 1)
+    elif query.data == 'Cart<':
+        customer.cart_position = max(customer.cart_position - 1, 0)
+    elif query.data == 'Num+':
+        customer.cart[customer.cart_position]['quantity'] += 1
+    elif query.data == 'Num-':
+        customer.cart[customer.cart_position]['quantity'] = max(customer.cart[customer.cart_position]['quantity'] - 1,
+                                                                0)
+
+    logger.info("%s смотрит корзину. Корзина: %s", customer.first_name, customer.cart)
+
+    reply_keyboard = [
+        [
+            InlineKeyboardButton("➖", callback_data='Num-'),
+            InlineKeyboardButton(customer.cart[customer.cart_position]['quantity'], callback_data='Nothing'),
+            InlineKeyboardButton("➕", callback_data='Num+')
+        ],
+        [
+            InlineKeyboardButton("⬅", callback_data='Cart<'),
+            InlineKeyboardButton(f'{customer.cart_position + 1} из {len(customer.cart)}', callback_data='Nothing'),
+            InlineKeyboardButton("➡", callback_data='Cart>')
+        ],
+        [
+            InlineKeyboardButton("Оформить заказ", callback_data='Order'),
+            InlineKeyboardButton("Назад в меню", callback_data='Menu')
+        ]
+    ]
+    product = context.user_data[user.id].cart[customer.cart_position]
+    cart_messages = (
+        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
+        f'Товар: {product["link"]}')
+    await query.edit_message_media(
+        InputMediaPhoto(context.user_data[user.id].cart[customer.cart_position]["image_link"]),
+        reply_markup=InlineKeyboardMarkup(reply_keyboard))
+
+    await query.edit_message_caption(caption=cart_messages,
+                                     reply_markup=InlineKeyboardMarkup(reply_keyboard))
+
+    return CART
 
 
 async def checkout(update, context):
@@ -343,7 +454,7 @@ async def checkout(update, context):
 
     cart_messages = []
     total_price = 0
-    for product in customer.cart.values():
+    for product in customer.cart:
         total_price += product["price"] * product["quantity"]
         cart_messages.append(
             f'Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
@@ -390,10 +501,10 @@ async def checkout(update, context):
 
 if __name__ == '__main__':
     # my_persistence = PicklePersistence(filepath='my_file.pkl')
-    my_persistence = DictPersistence()
-    application = ApplicationBuilder().token(key).persistence(my_persistence).build()
+    # my_persistence = DictPersistence()
+    # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
 
-    # application = ApplicationBuilder().token(key).build()
+    application = ApplicationBuilder().token(key).build()
 
     conv_handler = ConversationHandler(
         entry_points=[
@@ -413,15 +524,19 @@ if __name__ == '__main__':
 
             SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), address),
                         # CallbackQueryHandler(show_cart, pattern="^Корзина$"),
-                        MessageHandler(filters.Regex("^(Корзина)$"), show_cart),
+                        MessageHandler(filters.Regex("^(Корзина)$"), show_cart_message),
                         MessageHandler(filters.Regex("^(Добавить)"), add_product),
                         MessageHandler(filters.Regex("^(➡|⬅|Закрыть корзину)$"), show_product),
-                        MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart)],
+                        MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart),
+                        MessageHandler(filters.TEXT, show_product)],
+            CART: [CallbackQueryHandler(show_cart_query, pattern="^(Num|Nothing|Cart)"),
+                   CallbackQueryHandler(show_product_query, pattern="^Menu$"),
+                   CallbackQueryHandler(address, pattern="^Order$")],
             ADDRESS: [MessageHandler(filters.TEXT, shipper)],
             CHECKOUT: [MessageHandler(filters.Regex("^(СДЭК|Почта России)$"), checkout)]
         },
         fallbacks=[CommandHandler("start", start)],
-        persistent=True,
+        # persistent=True,
         name='magbot',
     )
 
