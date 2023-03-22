@@ -1,4 +1,4 @@
-# import asyncpg
+import asyncpg
 import asyncpg_listen
 from db_password import password_railway, host
 import asyncio
@@ -9,7 +9,7 @@ from key import key_admin as key
 
 
 async def send_to_admin(username, order_id, order_time, bot):
-    text = f'Покупатель с id: {username}\nCделал заказ № {order_id}\n' \
+    text = f'Покупатель с ником: @{username}\nCделал заказ № {order_id}\n' \
            f'{order_time}\n' \
            f'Полная информация в Базе данных.'
     await bot.send_message(text=text, chat_id=106683136)
@@ -25,7 +25,10 @@ async def handle_notifications(notification, bot):
     order_id = order["order_id"]
     order_time = order['order_time']
     order_time = f'Дата: {order_time[:10]} Время: {order_time[11:19]}'
-    username = customer_id
+    conn = await asyncpg.connect(database='railway', user='postgres', port=5522, host=host,
+                                 password=password_railway)
+    row = await conn.fetchrow('SELECT username FROM customer WHERE customer_id = $1', customer_id)
+    username = row[0]
     await send_to_admin(username, order_id, order_time, bot)
 
 
