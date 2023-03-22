@@ -1,20 +1,19 @@
 import logging
-from customer import Customer
 import psycopg2
 import psycopg2.extras
 import random
 import traceback
 import html
 import json
-from datetime import datetime, timezone
-from key import key
-from db_password import host, password_railway
-from telegram import *
-# Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import *
+from customer import Customer
 from db_connection import PostgresConnection
-
-# ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from key import key
+from datetime import datetime, timezone
+from db_password import host, password_railway
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
+    InputMediaPhoto
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, \
+    CallbackQueryHandler
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,12 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SHOP, SECTION, DATABASE, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT, CART = range(9)
-
-
-# def facts_to_str(user_data):
-#     facts = [f"{key} - {value}" for key, value in user_data.items()]
-#     return "\n".join(facts).join(["\n", "\n"])
+SHOP, SECTION, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT, CART = range(8)
 
 
 async def start(update, context):
@@ -37,18 +31,8 @@ async def start(update, context):
     await update.message.reply_text(
         f"Добро пожаловать в бот для покупки вещей ЯБерезка, {user.username} \n"
         "Из какого магазина хотите заказать одежду?",
-        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True,
-                                         input_field_placeholder="Название магазина"),
+        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True),
     )
-    #
-    # reply_keyboard = [[InlineKeyboardButton("Zara", callback_data='Zara'),
-    #                    InlineKeyboardButton("Next", callback_data='Next')]]
-    # await update.message.reply_text(
-    #     f"Добро пожаловать в бот для покупки вещей ЯБерезка, {user.username} \n"
-    #     "Из какого магазина хотите заказать одежду?",
-    #     reply_markup=InlineKeyboardMarkup(inline_keyboard=reply_keyboard)
-    # )
-
     pg_con = PostgresConnection()
     new_customer = Customer(user.id, user.first_name, user.last_name, user.username, connection=pg_con)
     context.user_data[user.id] = new_customer
@@ -59,9 +43,7 @@ async def restart(update, context):
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
-        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True,
-                                         input_field_placeholder="название магазина"),
-    )
+        reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True))
     return SHOP
 
 
@@ -75,26 +57,8 @@ async def shop_name(update, context):
     await update.message.reply_text(
         'Отлично, теперь скажите для кого ищете одежду?',
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, resize_keyboard=True,
-            input_field_placeholder="для кого?"))
+            reply_keyboard, resize_keyboard=True))
     return SECTION
-
-
-# async def shop_name(update, context):
-#     query = update.callback_query
-#     print(query)
-#     user = query.from_user
-#     # user = update.message.from_user
-#     logger.info("%s выбрал магазин %s", user.first_name, update.callback_query.data)
-#     context.user_data[user.id].shop = update.callback_query.data
-#     reply_keyboard = [[InlineKeyboardButton("Мужчины 👨", callback_data='Мужчины 👨'),
-#                        InlineKeyboardButton("Женщины 👩", callback_data='Женщины 👩')],
-#                       [InlineKeyboardButton("Мальчики 👦", callback_data='Мальчики 👦'),
-#                        InlineKeyboardButton("Девочки 👧", callback_data='Девочки 👧'),
-#                        InlineKeyboardButton("Малыши 👶", callback_data='Малыши 👶')]]
-#     await query.edit_message_text(
-#         'Отлично, теперь скажите для кого ищете одежду?', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-#     return SECTION
 
 
 async def you_silly(update, context):
@@ -130,8 +94,7 @@ async def category_name(update, context):
         await update.message.reply_text(
             'Хорошо, а из какой категории товаров?',
             reply_markup=ReplyKeyboardMarkup(
-                popular_categories, resize_keyboard=True,
-                input_field_placeholder="категория"))
+                popular_categories, resize_keyboard=True))
 
     return CATEGORY
 
@@ -145,7 +108,11 @@ async def woman_dress(update, context):
             cur.execute(count_query)
             number_of_products = cur.fetchone()[0]
             rand_dress = random.randint(1, number_of_products)
-            select_query = """ SELECT product_link, image_link, product_name,price FROM product WHERE category_id = '2187655' LIMIT 1 OFFSET (%s)"""
+            select_query = """ 
+            SELECT product_link, image_link, product_name,price
+            FROM product
+            WHERE category_id = '2187655'
+            LIMIT 1 OFFSET (%s)"""
             cur.execute(select_query, (rand_dress,))
             records = cur.fetchall()
             for rand_int in range(0, 1):
@@ -154,14 +121,13 @@ async def woman_dress(update, context):
                 product_name = records[rand_int][2]
                 price = records[rand_int][3]
                 print(product_link, image_link)
-                text = f"<a href='{image_link}'>картинка</a>"
             await update.message.reply_markdown_v2(text=f"[l]({image_link})"
-                                                        f" [{product_name.replace('-', ' ').replace('.', ' ')} {price} тг]({product_link})")
+                                                        f" [{product_name.replace('-', ' ').replace('.', ' ')} "
+                                                        f"{price} тг]({product_link})")
 
 
 async def show_product(update, context):
     user = update.message.from_user
-    # context.user_data[user.id].curret_product_id = None
     customer = context.user_data[user.id]
     if update.message.text not in ('➡', '⬅'):
         context.user_data[user.id].category = update.message.text.upper()
@@ -191,7 +157,6 @@ async def show_product(update, context):
     product_link = customer.products_from_category[number]['product_link']
     product_id = customer.products_from_category[number]['product_id']
     product_name = product_name.capitalize()
-
     logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
     product_name = product_name.replace('-', "\-").replace('.', '\.')
     await update.message.reply_photo(image_link,
@@ -272,7 +237,7 @@ async def show_product_query(update, context):
     await update.callback_query.message.reply_photo(image_link,
                                                     caption=f"{product_name}\n"
                                                             f"Цена: {price} Тенге\n"
-                                                            f"[Ссылка]({product_link})",
+                                                            f"[Ссылка на товар]({product_link})",
                                                     parse_mode='MarkdownV2',
                                                     reply_markup=ReplyKeyboardMarkup(reply_keyboard,
                                                                                      resize_keyboard=True),
@@ -358,48 +323,16 @@ async def shipper(update, context):
     return CHECKOUT
 
 
-async def show_cart(update, context):
-    user = update.message.from_user
-    cart_messages = []
-    logger.info("%s смотрит корзину. Корзина: %s", context.user_data[user.id].first_name,
-                context.user_data[user.id].cart)
-    for product in context.user_data[user.id].cart.values():
-        cart_messages.append(
-            f'Название: {product["name"].capitalize()} \nЦена: {product["price"]}\nКоличество: {product["quantity"]}\n'
-            f'Товар: {product["link"]}')
-    cart_messages = '\n\n'.join(cart_messages)
-    reply_keyboard = [['Оформить заказ'], ['Закрыть корзину']]
-    await update.message.reply_text(cart_messages,
-                                    reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True))
-    return SELECTION
-
-
 async def show_cart_message(update, context):
     user = update.message.from_user
     context.user_data[user.id].cart_position = 0
     customer = context.user_data[user.id]
     await update.message.reply_text('Ваша корзина:', reply_markup=ReplyKeyboardRemove())
     logger.info("%s смотрит корзину. Корзина: %s", customer.first_name, customer.cart)
-
-    reply_keyboard = [
-        [
-            InlineKeyboardButton("➖", callback_data='Num-'),
-            InlineKeyboardButton(customer.cart[customer.cart_position]['quantity'], callback_data='Nothing'),
-            InlineKeyboardButton("➕", callback_data='Num+')
-        ],
-        [
-            InlineKeyboardButton("⬅", callback_data='Cart<'),
-            InlineKeyboardButton(f'1 из {len(customer.cart)}', callback_data='Nothing'),
-            InlineKeyboardButton("➡", callback_data='Cart>')
-        ],
-        [
-            InlineKeyboardButton("Оформить заказ", callback_data='Order'),
-            InlineKeyboardButton("Назад в меню", callback_data='Menu')
-        ]
-    ]
+    reply_keyboard = await show_cart_keyboard(customer)
     product = customer.cart[customer.cart_position]
     cart_messages = (
-        f' Название: {product["name"].capitalize()} \nЦена: {product["price"]}\n')
+        f'{product["name"].capitalize()} \nЦена: {product["price"]}\n')
     await update.message.reply_photo(context.user_data[user.id].cart[0]["image_link"],
                                      caption=cart_messages, reply_markup=InlineKeyboardMarkup(reply_keyboard))
     return CART
@@ -416,8 +349,8 @@ async def show_cart_query(update, context):
     elif query.data == 'Num+':
         customer.cart[customer.cart_position]['quantity'] += 1
     elif query.data == 'Num-':
-        customer.cart[customer.cart_position]['quantity'] = max(customer.cart[customer.cart_position]['quantity'] - 1,
-                                                                0)
+        customer.cart[customer.cart_position]['quantity'] = \
+            max(customer.cart[customer.cart_position]['quantity'] - 1, 0)
         if customer.cart[customer.cart_position]['quantity'] == 0:
             customer.cart.pop(customer.cart_position)
             customer.cart_position = 0
@@ -430,6 +363,21 @@ async def show_cart_query(update, context):
         logger.info("%s изменил количество товара в корзине. Корзина: %s", customer.first_name, customer.cart)
     else:
         logger.info("%s что-то делает в корзине. Корзина: %s", customer.first_name, customer.cart)
+    reply_keyboard = await show_cart_keyboard(customer)
+    product = context.user_data[user.id].cart[customer.cart_position]
+    cart_messages = (
+        f'{product["name"].capitalize()} \nЦена: {product["price"]}\n')
+    await query.edit_message_media(
+        InputMediaPhoto(context.user_data[user.id].cart[customer.cart_position]["image_link"]),
+        reply_markup=InlineKeyboardMarkup(reply_keyboard))
+
+    await query.edit_message_caption(caption=cart_messages,
+                                     reply_markup=InlineKeyboardMarkup(reply_keyboard))
+
+    return CART
+
+
+async def show_cart_keyboard(customer):
     reply_keyboard = [
         [
             InlineKeyboardButton("➖", callback_data='Num-'),
@@ -446,17 +394,7 @@ async def show_cart_query(update, context):
             InlineKeyboardButton("Назад в меню", callback_data='Menu')
         ]
     ]
-    product = context.user_data[user.id].cart[customer.cart_position]
-    cart_messages = (
-        f'{product["name"].capitalize()} \nЦена: {product["price"]}\n')
-    await query.edit_message_media(
-        InputMediaPhoto(context.user_data[user.id].cart[customer.cart_position]["image_link"]),
-        reply_markup=InlineKeyboardMarkup(reply_keyboard))
-
-    await query.edit_message_caption(caption=cart_messages,
-                                     reply_markup=InlineKeyboardMarkup(reply_keyboard))
-
-    return CART
+    return reply_keyboard
 
 
 async def checkout(update, context):
@@ -476,7 +414,8 @@ async def checkout(update, context):
             f'Количество: {product["quantity"]}\n'
             f'[Ссылка на товар]({product["link"]})')
     cart_messages = '\n\n'.join(cart_messages)
-    message = f"Ваш заказ оформлен\!\nОбщая стоимость: {total_price} Тенге\n\n{cart_messages}"
+    message = f"Ваш заказ оформлен." \
+              f"\nОбщая стоимость: {total_price} Тенге\n\n{cart_messages}"
 
     context.user_data[user.id].connection.simple_check()
     with context.user_data[user.id].connection.connection.cursor() as cur:
@@ -519,7 +458,7 @@ async def checkout(update, context):
 
 
 async def error_handler(update, context):
-    logger.error(msg="Exception while handling an update:")
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
 
@@ -533,7 +472,7 @@ async def error_handler(update, context):
         f"<pre>{html.escape(tb_string)}</pre>"
     )
 
-    # Finally, send the message
+    # logger.error(msg=message)
     await context.bot.send_message(chat_id=106683136, text=message, parse_mode="HTML")
 
 
@@ -553,7 +492,7 @@ if __name__ == '__main__':
             SHOP: [
                 # CallbackQueryHandler(shop_name, pattern="^(Zara|Next)$"),
                 MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
-                MessageHandler(filters.Regex("^(От тети Глаши)$"), you_silly)],
+                MessageHandler(filters.Regex("^От тети Глаши$"), you_silly)],
 
             SECTION: [
                 MessageHandler(filters.Regex(
@@ -561,9 +500,8 @@ if __name__ == '__main__':
 
             CATEGORY: [MessageHandler(filters.TEXT, show_product)],
 
-            SELECTION: [MessageHandler(filters.Regex("^(Оформить заказ)$"), address),
-                        CallbackQueryHandler(show_cart, pattern="^Num-$"),
-                        MessageHandler(filters.Regex("^(Корзина)$"), show_cart_message),
+            SELECTION: [MessageHandler(filters.Regex("^Оформить заказ$"), address),
+                        MessageHandler(filters.Regex("^Корзина$"), show_cart_message),
                         MessageHandler(filters.Regex("^(Добавить|➕|➖)"), add_product),
                         MessageHandler(filters.Regex("^(➡|⬅|Закрыть корзину)$"), show_product),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart),
