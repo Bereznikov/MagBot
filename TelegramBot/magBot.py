@@ -3,6 +3,9 @@ from customer import Customer
 import psycopg2
 import psycopg2.extras
 import random
+import traceback
+import html
+import json
 from datetime import datetime, timezone
 from key import key
 from db_password import host, password_railway
@@ -190,7 +193,7 @@ async def show_product(update, context):
     product_name = product_name.capitalize()
 
     logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
-    product_name = product_name.replace('-', '\-').replace('.', '\.')
+    product_name = product_name.replace('-', "\-").replace('.', '\.')
     await update.message.reply_photo(image_link,
                                      caption=f"{product_name}\n"
                                              f"Цена: {price} Тенге\n"
@@ -515,6 +518,25 @@ async def checkout(update, context):
     return SELECTION
 
 
+async def error_handler(update, context):
+    logger.error(msg="Exception while handling an update:")
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_string = "".join(tb_list)
+
+    update_str = update.to_dict() if isinstance(update, Update) else str(update)
+    message = (
+        f"An exception was raised while handling an update\n"
+        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+        "</pre>\n\n"
+        f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
+        f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
+        f"<pre>{html.escape(tb_string)}</pre>"
+    )
+
+    # Finally, send the message
+    await context.bot.send_message(chat_id=106683136, text=message, parse_mode="HTML")
+
+
 if __name__ == '__main__':
     # my_persistence = PicklePersistence(filepath='my_file.pkl')
     # my_persistence = DictPersistence()
@@ -556,6 +578,6 @@ if __name__ == '__main__':
         # persistent=True,
         name='magbot',
     )
-
+    application.add_error_handler(error_handler)
     application.add_handler(conv_handler)
     application.run_polling()
