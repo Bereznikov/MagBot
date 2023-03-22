@@ -14,10 +14,10 @@ class PostgresConnection:
         self.connection = connection
         # self.pool = postgres_pool
 
-    def check_connection(self):
+    def strong_check(self):
         try:
             cur = self.connection.cursor()
-            cur.execute('SELECT 1')
+            cur.execute('SELECT shipper_id FROM shipper')
         except Exception as ex:
             print(ex)
             self.update()

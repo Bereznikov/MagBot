@@ -414,10 +414,10 @@ async def checkout(update, context):
             f'Количество: {product["quantity"]}\n'
             f'[Ссылка на товар]({product["link"]})')
     cart_messages = '\n\n'.join(cart_messages)
-    message = f"Ваш заказ оформлен." \
+    message = f"Ваш заказ оформлен\!" \
               f"\nОбщая стоимость: {total_price} Тенге\n\n{cart_messages}"
 
-    context.user_data[user.id].connection.simple_check()
+    context.user_data[user.id].connection.strong_check()
     with context.user_data[user.id].connection.connection.cursor() as cur:
         try:
             select_user_query = """SELECT customer_id FROM customer"""

@@ -7,20 +7,17 @@ import json
 
 from telegram import *
 from key import key_admin as key
-from telegram.ext import *
 
 
 async def send_to_admin(username, order_id, order_time, bot):
     text = f'Покупатель с ником: @{username}\nCделал заказ № {order_id}\n' \
            f'{order_time}\n' \
            f'Полная информация в Базе данных.'
-
     await bot.send_message(text=text, chat_id=106683136)
 
 
 async def main():
     bot = Bot(key)
-
     conn = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                             password=password_railway)
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -28,10 +25,13 @@ async def main():
     cursor.execute(f"LISTEN orders;")
 
     while True:
-        conn.poll()
-        check_query = """SELECT 1"""
-        cursor.execute(check_query)
-        print(cursor.fetchone()[0])
+        if select.select([conn], [], [], 5) == ([], [], []):
+            print("Timeout")
+        else:
+            conn.poll()
+        # check_query = """SELECT customer_id FROM customer"""
+        # cursor.execute(check_query)
+        # print(cursor.fetchone()[0])
         for notify in conn.notifies:
             order = json.loads(notify.payload)
             customer_id = order["customer_id"]
@@ -44,7 +44,7 @@ async def main():
                 WHERE customer_id = %s"""
             cursor.execute(select_query, (customer_id,))
             username = cursor.fetchone()[0]
-            print(username)
+            print(f'Пришел заказ {order_id} от {customer_id}')
             await send_to_admin(username, order_id, order_time, bot)
 
         conn.notifies.clear()
