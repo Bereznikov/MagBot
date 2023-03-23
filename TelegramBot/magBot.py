@@ -91,9 +91,8 @@ async def category_name(update, context):
         cur.execute(popular_categories_query, (store_name, section_name))
         _tmp = cur.fetchall()
         cur.close()
-        _popular_categories = [a[0].title() for a in _tmp[:12]]
-        popular_categories = [_popular_categories[:3], _popular_categories[3: 6],
-                              _popular_categories[6:9], _popular_categories[9:]]
+        _popular_categories = [a[0].capitalize() for a in _tmp[:30]]
+        popular_categories = [_popular_categories[2 * i: 2 * i + 2] for i in range((len(_popular_categories) + 1) // 2)]
         await update.message.reply_text(
             'Хорошо, а из какой категории товаров?',
             reply_markup=ReplyKeyboardMarkup(
@@ -180,7 +179,7 @@ async def show_product_sql_products(context, user):
                     SELECT product_link, image_link, product_name, price, product_id
                     FROM product_full_info
                     WHERE shop_name = %s AND section_name = %s AND category_name = %s
-                    ORDER BY product_id
+                    ORDER BY product_id DESC
                     LIMIT 10
                     OFFSET %s
                     """
