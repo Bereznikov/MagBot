@@ -1,6 +1,6 @@
 import psycopg2
 from db_password import host, password_railway
-from psycopg2 import pool
+# from psycopg2 import pool
 
 
 class PostgresConnection:
@@ -14,22 +14,23 @@ class PostgresConnection:
         self.connection = connection
         # self.pool = postgres_pool
 
-    def very_strong_check(self):
+    def strong_check(self):
         try:
             cur = self.connection.cursor()
-            cur.execute('SELECT shipper_id FROM shipper')
+            cur.execute('SELECT 1')
+            cur.close()
         except Exception as ex:
-            print(ex)
+            print(ex.__class__, 'Connection was lost and updated')
             self.update()
 
-    def connection_status_check(self):
+    def status_check(self):
         try:
             self.connection.isolation_level
         except Exception as ex:
             print(ex)
             self.update()
 
-    def strong_check(self):
+    def medium_check(self):
         try:
             cur = self.connection.cursor()
             # cur.execute('SELECT shipper_id FROM shipper')

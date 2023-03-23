@@ -41,7 +41,7 @@ async def start(update, context):
 
 async def restart(update, context):
     user = update.effective_user
-    context.user_data[user.id].connection.very_strong_check()
+    context.user_data[user.id].connection.strong_check()
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
