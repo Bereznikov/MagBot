@@ -40,6 +40,8 @@ async def start(update, context):
 
 
 async def restart(update, context):
+    user = update.effective_user
+    context.user_data[user.id].connection.very_strong_check()
     reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
@@ -76,7 +78,7 @@ async def category_name(update, context):
     context.user_data[user.id].section = update.message.text[:-2]
 
     logger.info("%s выбрал секцию: %s", user.first_name, update.message.text[:-2])
-    context.user_data[user.id].connection.simple_check()
+    context.user_data[user.id].connection.strong_check()
     with context.user_data[user.id].connection.connection.cursor() as cur:
         store_name = context.user_data[user.id].shop
         section_name = context.user_data[user.id].section
@@ -88,6 +90,7 @@ async def category_name(update, context):
                                             """
         cur.execute(popular_categories_query, (store_name, section_name))
         _tmp = cur.fetchall()
+        cur.close()
         _popular_categories = [a[0].title() for a in _tmp[:12]]
         popular_categories = [_popular_categories[:3], _popular_categories[3: 6],
                               _popular_categories[6:9], _popular_categories[9:]]
@@ -171,7 +174,7 @@ async def show_product(update, context):
 
 async def show_product_sql_products(context, user):
     customer = context.user_data[user.id]
-    customer.connection.simple_check()
+    customer.connection.strong_check()
     with customer.connection.connection.cursor() as cur:
         select_query = """
                     SELECT product_link, image_link, product_name, price, product_id
@@ -401,8 +404,6 @@ async def checkout(update, context):
     user = update.message.from_user
     context.user_data[user.id].shipper = update.message.text
     customer = context.user_data[user.id]
-    logger.info("%s оформил заказ. Корзина: %s", customer.first_name, customer.cart)
-
     cart_messages = []
     total_price = 0
     for product in customer.cart:
