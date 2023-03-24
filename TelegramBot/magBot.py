@@ -19,6 +19,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
 logger = logging.getLogger(__name__)
 
 SHOP, SECTION, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT, CART = range(8)
@@ -82,12 +83,12 @@ async def category_name(update, context):
     with context.user_data[user.id].connection.connection.cursor() as cur:
         store_name = context.user_data[user.id].shop
         section_name = context.user_data[user.id].section
-        popular_categories_query = """SELECT category_name
-                                            FROM product_full_info
-                                            WHERE shop_name = %s AND section_name = %s
-                                            GROUP BY category_name
-                                            ORDER BY COUNT(*) DESC
-                                            """
+        popular_categories_query = """
+        SELECT category_name
+        FROM product_full_info
+        WHERE shop_name = %s AND section_name = %s AND availability = true
+        GROUP BY category_name
+        ORDER BY COUNT(*) DESC"""
         cur.execute(popular_categories_query, (store_name, section_name))
         _tmp = cur.fetchall()
         cur.close()
@@ -175,14 +176,13 @@ async def show_product_sql_products(context, user):
     customer = context.user_data[user.id]
     customer.connection.strong_check()
     with customer.connection.connection.cursor() as cur:
-        select_query = """
-                    SELECT product_link, image_link, product_name, price, product_id
-                    FROM product_full_info
-                    WHERE shop_name = %s AND section_name = %s AND category_name = %s
-                    ORDER BY product_id DESC
-                    LIMIT 10
-                    OFFSET %s
-                    """
+        select_query = \
+            """SELECT product_link, image_link, product_name, price, product_id
+            FROM product_full_info
+            WHERE shop_name = %s AND section_name = %s AND category_name = %s AND availability = true
+            ORDER BY product_id DESC
+            LIMIT 10
+            OFFSET %s"""
         cur.execute(select_query,
                     (customer.shop, customer.section,
                      customer.category, len(customer.products_from_category)))
@@ -211,7 +211,7 @@ async def show_product_keyboard(customer):
     if customer.cart and customer.products_from_category:
         for i, product in enumerate(customer.cart):
             if customer.products_from_category[customer.number]['product_id'] == product['product_id']:
-                reply_keyboard[1] = ['➖', f"{customer.cart[i]['quantity']}", '➕']
+                reply_keyboard[1] = ['🔻', f"{customer.cart[i]['quantity']}", '🔺']
     if customer.cart:
         reply_keyboard[-1].insert(0, 'Корзина')
     return reply_keyboard
@@ -298,7 +298,7 @@ async def add_product_keyboard(customer, deleted_from_cart, product_num):
     if customer.number + 1 < customer.number_of_products:
         reply_keyboard[0].append('➡')
     if not deleted_from_cart and customer.cart[product_num]['quantity'] > 0:
-        reply_keyboard[1] = ['➖', f"{customer.cart[product_num]['quantity']}", '➕']
+        reply_keyboard[1] = ['🔻', f"{customer.cart[product_num]['quantity']}", '🔺']
     if customer.cart:
         reply_keyboard[-1].insert(0, 'Корзина')
     return reply_keyboard
@@ -382,9 +382,9 @@ async def show_cart_query(update, context):
 async def show_cart_keyboard(customer):
     reply_keyboard = [
         [
-            InlineKeyboardButton("➖", callback_data='Num-'),
+            InlineKeyboardButton("🔻", callback_data='Num-'),
             InlineKeyboardButton(customer.cart[customer.cart_position]['quantity'], callback_data='Nothing'),
-            InlineKeyboardButton("➕", callback_data='Num+')
+            InlineKeyboardButton("🔺", callback_data='Num+')
         ],
         [
             InlineKeyboardButton("⬅", callback_data='Cart<'),
@@ -502,7 +502,7 @@ if __name__ == '__main__':
 
             SELECTION: [MessageHandler(filters.Regex("^Оформить заказ$"), address),
                         MessageHandler(filters.Regex("^Корзина$"), show_cart_message),
-                        MessageHandler(filters.Regex("^(Добавить|➕|➖)"), add_product),
+                        MessageHandler(filters.Regex("^(Добавить|🔻|🔺)"), add_product),
                         MessageHandler(filters.Regex("^(➡|⬅|Закрыть корзину)$"), show_product),
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart),
                         MessageHandler(filters.Regex('/^([^0-9]*)$/'), show_product)],
