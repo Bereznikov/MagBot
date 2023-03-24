@@ -3,4 +3,5 @@
 /Parsing/zara_categories_full.json
 /TelegramBot/key.py
 /TelegramBot/db_password.py
-/Parsing/next_updated.json
+/Parsing/db_password.py
+/Database/db_password.py

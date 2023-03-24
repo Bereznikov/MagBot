@@ -2,9 +2,11 @@ from fake_useragent import UserAgent
 import requests
 import asyncio
 import aiohttp
-# from aiohttp_retry import RetryClient, ExponentialRetry
 from bs4 import BeautifulSoup
 import json
+import psycopg2
+import psycopg2.extras
+from db_password import password_railway, host
 
 
 class Parser:
@@ -134,7 +136,8 @@ class Parser:
                                              'name': good_name,
                                              'price_low': price.strip('тг').replace(' ', ''),
                                              'price_big': price.strip('тг').replace(' ', ''),
-                                             'link': good_link, 'image_path': image,
+                                             'link': good_link,
+                                             'image_path': image,
                                              'availability': 'in_stock',
                                              'section_name': section_name,
                                              'category_name': category_name}
@@ -144,7 +147,8 @@ class Parser:
                                          'price_low': price.strip('тг').replace(' ', ''),
                                          'price_big': price.strip('тг').replace(' ', ''),
                                          'link': good_link,
-                                         'image_path': image, 'availability': 'in_stock',
+                                         'image_path': image,
+                                         'availability': 'in_stock',
                                          'section_name': section_name,
                                          'category_name': category_name}
                         if good_dict['id'] not in self.id_set:
@@ -186,15 +190,70 @@ def make_next_json_with_category_id():
         next_categories = json.load(file)
     next_categories_dict = {}
     for category in next_categories:
-        next_categories_dict[category['subcategory']] = category['id']
+        next_categories_dict[category['category'] + category['subcategory']] = category['id']
     for product in next_product:
-        if next_categories_dict.get(product['category_name'].upper()):
-            product['category_id'] = next_categories_dict.get(product['category_name'].upper())
+        if next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper()):
+            product['category_id'] = next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper())
     with open('next_updated.json', "w", encoding='utf-8') as file:
         json.dump(next_product, file, indent=4, ensure_ascii=False)
 
 
+def find_new_ids(obj):
+    set_id = obj.id_set
+    new_ids = []
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
+            query_result = cur.fetchall()
+            for i in set_id:
+                if tuple(i) not in query_result:
+                    new_ids.append(i)
+    return new_ids
+
+
+def find_not_actual_items(obj):
+    set_id = obj.id_set
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
+            query_result = cur.fetchall()
+            for item_id in query_result:
+                if item_id[0] not in set_id:
+                    cur.execute("""UPDATE product SET availability = false WHERE product_id = """ + item_id[0])
+
+
+def insert_new_products(new_ids):
+    with open('next_updated.json', "r", encoding='utf-8') as file:
+        products = json.load(file)
+    new_products = []
+    for i in new_ids:
+        for product in products:
+            if product['id'] == i:
+                new_products.append(product)
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for new_product in new_products:
+                cur.execute("""INSERT INTO product (product_id, product_name, price, price_high, product_link, image_link, category_id, shop_id, description, availability)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (
+                    new_product['id'], new_product['name'], new_product['price_low'], new_product['price_big'],
+                    new_product['link'], new_product['image_path'], new_product['category_id'], 2, None,
+                    True))
+
+
 if __name__ == '__main__':
+    db_url = 'postgresql://postgres:jisJH7i2ddKod3ItAfj5@containers-us-west-91.railway.app:5522/railway'
     parse_site = Parser()
     parse_site('https://www.nextdirect.com/kz/ru')
     make_next_json_with_category_id()
+    new_items = find_new_ids(parse_site)
+    if new_items:
+        print('Появились новые вещи')
+        print(*new_items)
+        insert_new_products(new_items)
+    find_not_actual_items(parse_site)
