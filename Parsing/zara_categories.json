@@ -1,13 +1,6 @@
 [
     {
         "category": "ЖЕНЩИНЫ",
-        "subcategory": "ПЛЯЖНАЯ КОЛЛЕКЦИЯ",
-        "id": 2188006,
-        "url": "https://www.zara.com/kz/ru/category/2188006/products?ajax=true",
-        "sectionName": "WOMAN"
-    },
-    {
-        "category": "ЖЕНЩИНЫ",
         "subcategory": "НОВИНКИ",
         "id": 2184058,
         "url": "https://www.zara.com/kz/ru/category/2184058/products?ajax=true",
@@ -50,7 +43,7 @@
     },
     {
         "category": "ЖЕНЩИНЫ",
-        "subcategory": "ФУТБОЛКИ",
+        "subcategory": "ФУТБОЛКИ | БОДИ",
         "id": 2184383,
         "url": "https://www.zara.com/kz/ru/category/2184383/products?ajax=true",
         "sectionName": "WOMAN"
@@ -60,13 +53,6 @@
         "subcategory": "ТОПЫ",
         "id": 2184421,
         "url": "https://www.zara.com/kz/ru/category/2184421/products?ajax=true",
-        "sectionName": "WOMAN"
-    },
-    {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "БОДИ",
-        "id": 2184459,
-        "url": "https://www.zara.com/kz/ru/category/2184459/products?ajax=true",
         "sectionName": "WOMAN"
     },
     {
@@ -99,9 +85,16 @@
     },
     {
         "category": "ЖЕНЩИНЫ",
-        "subcategory": "ЮБКИ | ШОРТЫ",
+        "subcategory": "ЮБКИ",
         "id": 2187655,
         "url": "https://www.zara.com/kz/ru/category/2187655/products?ajax=true",
+        "sectionName": "WOMAN"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ШОРТЫ",
+        "id": 2187687,
+        "url": "https://www.zara.com/kz/ru/category/2187687/products?ajax=true",
         "sectionName": "WOMAN"
     },
     {
@@ -120,6 +113,13 @@
     },
     {
         "category": "ЖЕНЩИНЫ",
+        "subcategory": "ПЛЯЖНАЯ КОЛЛЕКЦИЯ",
+        "id": 2188006,
+        "url": "https://www.zara.com/kz/ru/category/2188006/products?ajax=true",
+        "sectionName": "WOMAN"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
         "subcategory": "АКСЕССУАРЫ",
         "id": 2188012,
         "url": "https://www.zara.com/kz/ru/category/2188012/products?ajax=true",
@@ -130,6 +130,27 @@
         "subcategory": "КОСМЕТИКА ПОСМОТРЕТЬ ВСЕ",
         "id": 2188097,
         "url": "https://www.zara.com/kz/ru/category/2188097/products?ajax=true",
+        "sectionName": "WOMAN"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КОСМЕТИКА ОБУЧАЮЩИЕ ИНСТРУКЦИИ",
+        "id": 2242119,
+        "url": "https://www.zara.com/kz/ru/category/2242119/products?ajax=true",
+        "sectionName": "WOMAN"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КОСМЕТИКА Губы",
+        "id": 2188089,
+        "url": "https://www.zara.com/kz/ru/category/2188089/products?ajax=true",
+        "sectionName": "WOMAN"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КОСМЕТИКА СМЕННЫЕ БЛОКИ",
+        "id": 2188120,
+        "url": "https://www.zara.com/kz/ru/category/2188120/products?ajax=true",
         "sectionName": "WOMAN"
     },
     {
@@ -176,52 +197,31 @@
     },
     {
         "category": "ЖЕНЩИНЫ",
-        "subcategory": "SPECIAL EDITION SKI COLLECTION",
-        "id": 2182114,
-        "url": "https://www.zara.com/kz/ru/category/2182114/products?ajax=true",
+        "subcategory": "JOIN LIFE ИННОВАЦИИ СОТРУДНИЧЕСТВО",
+        "id": 2214125,
+        "url": "https://www.zara.com/kz/ru/category/2214125/products?ajax=true",
         "sectionName": "WOMAN"
     },
     {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "SPECIAL EDITION SKI COLLECTION COLLECTION",
-        "id": 2192319,
-        "url": "https://www.zara.com/kz/ru/category/2192319/products?ajax=true",
-        "sectionName": "WOMAN"
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ЛЬНЯНАЯ КОЛЛЕКЦИЯ",
+        "id": 2205412,
+        "url": "https://www.zara.com/kz/ru/category/2205412/products?ajax=true",
+        "sectionName": "MAN"
     },
     {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "SPECIAL EDITION SKI COLLECTION EDITORIAL",
-        "id": 2193945,
-        "url": "https://www.zara.com/kz/ru/category/2193945/products?ajax=true",
-        "sectionName": "WOMAN"
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ПЛЯЖНАЯ КОЛЛЕКЦИЯ",
+        "id": 2204505,
+        "url": "https://www.zara.com/kz/ru/category/2204505/products?ajax=true",
+        "sectionName": "MAN"
     },
     {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "SPECIAL EDITION SKI COLLECTION LOOKBOOK",
-        "id": 2192930,
-        "url": "https://www.zara.com/kz/ru/category/2192930/products?ajax=true",
-        "sectionName": "WOMAN"
-    },
-    {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "РАСПРОДАЖА СКИДКИ ОТ -60%",
-        "id": 2105311,
-        "url": "https://www.zara.com/kz/ru/category/2105311/products?ajax=true",
-        "sectionName": "WOMAN"
-    },
-    {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "РАСПРОДАЖА АКСЕССУАРЫ",
-        "id": 2186771,
-        "url": "https://www.zara.com/kz/ru/category/2186771/products?ajax=true",
-        "sectionName": "WOMAN"
-    },
-    {
-        "category": "ЖЕНЩИНЫ",
-        "subcategory": "РАСПРОДАЖА COLLECTION",
-        "id": 2220625,
-        "url": "https://www.zara.com/kz/ru/category/2220625/products?ajax=true",
-        "sectionName": "WOMAN"
+        "category": "МУЖЧИНЫ",
+        "subcategory": "НОВИНКИ",
+        "id": 2205383,
+        "url": "https://www.zara.com/kz/ru/category/2205383/products?ajax=true",
+        "sectionName": "MAN"
     },
     {
         "category": "МУЖЧИНЫ",
@@ -235,13 +235,6 @@
         "subcategory": "ZARA ORIGINS CAMPAIGN",
         "id": 2205418,
         "url": "https://www.zara.com/kz/ru/category/2205418/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "НОВИНКИ",
-        "id": 2205383,
-        "url": "https://www.zara.com/kz/ru/category/2205383/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -263,13 +256,6 @@
         "subcategory": "ZARA ATHLETICZ ДИСЦИПЛИНЫ",
         "id": 2205491,
         "url": "https://www.zara.com/kz/ru/category/2205491/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "SUMMERY GARMENTS",
-        "id": 2205414,
-        "url": "https://www.zara.com/kz/ru/category/2205414/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -302,20 +288,6 @@
     },
     {
         "category": "МУЖЧИНЫ",
-        "subcategory": "СВИТЕРЫ | КАРДИГАНЫ",
-        "id": 2205131,
-        "url": "https://www.zara.com/kz/ru/category/2205131/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РУБАШКИ",
-        "id": 2205200,
-        "url": "https://www.zara.com/kz/ru/category/2205200/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
         "subcategory": "ТОЛСТОВКИ",
         "id": 2205170,
         "url": "https://www.zara.com/kz/ru/category/2205170/products?ajax=true",
@@ -330,16 +302,9 @@
     },
     {
         "category": "МУЖЧИНЫ",
-        "subcategory": "КЛАССИЧЕСКИЕ КОСТЮМЫ",
-        "id": 2204077,
-        "url": "https://www.zara.com/kz/ru/category/2204077/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "ПАЛЬТО",
-        "id": 2203988,
-        "url": "https://www.zara.com/kz/ru/category/2203988/products?ajax=true",
+        "subcategory": "РУБАШКИ",
+        "id": 2205200,
+        "url": "https://www.zara.com/kz/ru/category/2205200/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -351,16 +316,30 @@
     },
     {
         "category": "МУЖЧИНЫ",
-        "subcategory": "КУРТКИ-РУБАШКИ",
-        "id": 2204063,
-        "url": "https://www.zara.com/kz/ru/category/2204063/products?ajax=true",
+        "subcategory": "ШОРТЫ",
+        "id": 2205326,
+        "url": "https://www.zara.com/kz/ru/category/2205326/products?ajax=true",
         "sectionName": "MAN"
     },
     {
         "category": "МУЖЧИНЫ",
-        "subcategory": "ЖИЛЕТЫ",
-        "id": 2204076,
-        "url": "https://www.zara.com/kz/ru/category/2204076/products?ajax=true",
+        "subcategory": "СВИТЕРЫ | КАРДИГАНЫ",
+        "id": 2205131,
+        "url": "https://www.zara.com/kz/ru/category/2205131/products?ajax=true",
+        "sectionName": "MAN"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "КЛАССИЧЕСКИЕ КОСТЮМЫ",
+        "id": 2204077,
+        "url": "https://www.zara.com/kz/ru/category/2204077/products?ajax=true",
+        "sectionName": "MAN"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "Тренчи",
+        "id": 2203988,
+        "url": "https://www.zara.com/kz/ru/category/2203988/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -368,20 +347,6 @@
         "subcategory": "БЛЕЙЗЕРЫ",
         "id": 2205104,
         "url": "https://www.zara.com/kz/ru/category/2205104/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "СПОРТИВНЫЕ КОСТЮМЫ",
-        "id": 2205159,
-        "url": "https://www.zara.com/kz/ru/category/2205159/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "Сапоги",
-        "id": 2203944,
-        "url": "https://www.zara.com/kz/ru/category/2203944/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -400,163 +365,23 @@
     },
     {
         "category": "МУЖЧИНЫ",
+        "subcategory": "ПАРФЮМЕРИЯ",
+        "id": 2204507,
+        "url": "https://www.zara.com/kz/ru/category/2204507/products?ajax=true",
+        "sectionName": "MAN"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СПЕЦИАЛЬНЫЕ ПРЕДЛОЖЕНИЯ",
+        "id": 2203945,
+        "url": "https://www.zara.com/kz/ru/category/2203945/products?ajax=true",
+        "sectionName": "MAN"
+    },
+    {
+        "category": "МУЖЧИНЫ",
         "subcategory": "SPECIAL EDITION",
         "id": 2204264,
         "url": "https://www.zara.com/kz/ru/category/2204264/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "SPECIAL EDITION BABAR",
-        "id": 2205448,
-        "url": "https://www.zara.com/kz/ru/category/2205448/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА СКИДКИ ОТ -40%",
-        "id": 2136873,
-        "url": "https://www.zara.com/kz/ru/category/2136873/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА БЛЕЙЗЕРЫ",
-        "id": 2204817,
-        "url": "https://www.zara.com/kz/ru/category/2204817/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ZARA ORIGINS",
-        "id": 2206030,
-        "url": "https://www.zara.com/kz/ru/category/2206030/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ZARA ORIGINS COLLECTION",
-        "id": 2204876,
-        "url": "https://www.zara.com/kz/ru/category/2204876/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА КУРТКИ-РУБАШКИ",
-        "id": 2204777,
-        "url": "https://www.zara.com/kz/ru/category/2204777/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА РУБАШКИ",
-        "id": 2204880,
-        "url": "https://www.zara.com/kz/ru/category/2204880/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ОБУВЬ",
-        "id": 2109825,
-        "url": "https://www.zara.com/kz/ru/category/2109825/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ПАЛЬТО",
-        "id": 2204702,
-        "url": "https://www.zara.com/kz/ru/category/2204702/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА КУРТКИ",
-        "id": 2204729,
-        "url": "https://www.zara.com/kz/ru/category/2204729/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ПУХОВИКИ",
-        "id": 2204771,
-        "url": "https://www.zara.com/kz/ru/category/2204771/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ЖИЛЕТЫ",
-        "id": 2206373,
-        "url": "https://www.zara.com/kz/ru/category/2206373/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА СВИТЕРЫ | КАРДИГАНЫ",
-        "id": 2206374,
-        "url": "https://www.zara.com/kz/ru/category/2206374/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ТОЛСТОВКИ",
-        "id": 2204844,
-        "url": "https://www.zara.com/kz/ru/category/2204844/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ШОРТЫ",
-        "id": 2204966,
-        "url": "https://www.zara.com/kz/ru/category/2204966/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА КЛАССИЧЕСКИЕ КОСТЮМЫ",
-        "id": 2204790,
-        "url": "https://www.zara.com/kz/ru/category/2204790/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ФУТБОЛКИ",
-        "id": 2206088,
-        "url": "https://www.zara.com/kz/ru/category/2206088/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ПОЛО",
-        "id": 2206089,
-        "url": "https://www.zara.com/kz/ru/category/2206089/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА БРЮКИ",
-        "id": 2206090,
-        "url": "https://www.zara.com/kz/ru/category/2206090/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ДЖИНСЫ",
-        "id": 2206652,
-        "url": "https://www.zara.com/kz/ru/category/2206652/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА ZARA ATHLETICZ",
-        "id": 2206607,
-        "url": "https://www.zara.com/kz/ru/category/2206607/products?ajax=true",
-        "sectionName": "MAN"
-    },
-    {
-        "category": "МУЖЧИНЫ",
-        "subcategory": "РАСПРОДАЖА АКСЕССУАРЫ",
-        "id": 2205017,
-        "url": "https://www.zara.com/kz/ru/category/2205017/products?ajax=true",
         "sectionName": "MAN"
     },
     {
@@ -567,10 +392,38 @@
         "sectionName": "BEAUTY"
     },
     {
+        "category": "BEAUTY",
+        "subcategory": "КОЛЛЕКЦИЯ ОБУЧАЮЩИЕ ИНСТРУКЦИИ",
+        "id": 2194021,
+        "url": "https://www.zara.com/kz/ru/category/2194021/products?ajax=true",
+        "sectionName": "BEAUTY"
+    },
+    {
+        "category": "BEAUTY",
+        "subcategory": "КОЛЛЕКЦИЯ Губы",
+        "id": 2193969,
+        "url": "https://www.zara.com/kz/ru/category/2193969/products?ajax=true",
+        "sectionName": "BEAUTY"
+    },
+    {
+        "category": "BEAUTY",
+        "subcategory": "КОЛЛЕКЦИЯ СМЕННЫЕ БЛОКИ",
+        "id": 2193974,
+        "url": "https://www.zara.com/kz/ru/category/2193974/products?ajax=true",
+        "sectionName": "BEAUTY"
+    },
+    {
         "category": "ДЕВОЧКИ",
-        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
-        "id": 2189704,
-        "url": "https://www.zara.com/kz/ru/category/2189704/products?ajax=true",
+        "subcategory": "SPECIAL OCCASION",
+        "id": 2189701,
+        "url": "https://www.zara.com/kz/ru/category/2189701/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "HOLIDAYS MOOD",
+        "id": 2189538,
+        "url": "https://www.zara.com/kz/ru/category/2189538/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -638,6 +491,13 @@
     },
     {
         "category": "ДЕВОЧКИ",
+        "subcategory": "ЛЕГИНСЫ",
+        "id": 2189562,
+        "url": "https://www.zara.com/kz/ru/category/2189562/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "ДЕВОЧКИ",
         "subcategory": "ТРИКОТАЖ",
         "id": 2189649,
         "url": "https://www.zara.com/kz/ru/category/2189649/products?ajax=true",
@@ -655,6 +515,13 @@
         "subcategory": "ГЕРОИ МУЛЬТФИЛЬМОВ",
         "id": 2189568,
         "url": "https://www.zara.com/kz/ru/category/2189568/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КУПАЛЬНИКИ",
+        "id": 2187550,
+        "url": "https://www.zara.com/kz/ru/category/2187550/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -701,16 +568,23 @@
     },
     {
         "category": "МАЛЬЧИКИ",
-        "subcategory": "TRUE NEUTRALS",
-        "id": 2190600,
-        "url": "https://www.zara.com/kz/ru/category/2190600/products?ajax=true",
+        "subcategory": "TAILORING PREMIUM",
+        "id": 2190469,
+        "url": "https://www.zara.com/kz/ru/category/2190469/products?ajax=true",
         "sectionName": "KID"
     },
     {
         "category": "МАЛЬЧИКИ",
-        "subcategory": "RUNNING",
-        "id": 2190422,
-        "url": "https://www.zara.com/kz/ru/category/2190422/products?ajax=true",
+        "subcategory": "PASTEL TONES",
+        "id": 2190551,
+        "url": "https://www.zara.com/kz/ru/category/2190551/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "HOLIDAYS MOOD",
+        "id": 2238656,
+        "url": "https://www.zara.com/kz/ru/category/2238656/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -718,6 +592,13 @@
         "subcategory": "НОВИНКИ",
         "id": 2190604,
         "url": "https://www.zara.com/kz/ru/category/2190604/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "TRUE NEUTRALS",
+        "id": 2190600,
+        "url": "https://www.zara.com/kz/ru/category/2190600/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -750,6 +631,13 @@
     },
     {
         "category": "МАЛЬЧИКИ",
+        "subcategory": "ШОРТЫ",
+        "id": 2189960,
+        "url": "https://www.zara.com/kz/ru/category/2189960/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
         "subcategory": "ДЖИНСЫ",
         "id": 2190391,
         "url": "https://www.zara.com/kz/ru/category/2190391/products?ajax=true",
@@ -778,13 +666,6 @@
     },
     {
         "category": "МАЛЬЧИКИ",
-        "subcategory": "СПОРТИВНЫЙ КОСТЮМ",
-        "id": 2190405,
-        "url": "https://www.zara.com/kz/ru/category/2190405/products?ajax=true",
-        "sectionName": "KID"
-    },
-    {
-        "category": "МАЛЬЧИКИ",
         "subcategory": "ГЕРОИ МУЛЬТФИЛЬМОВ",
         "id": 2190423,
         "url": "https://www.zara.com/kz/ru/category/2190423/products?ajax=true",
@@ -792,9 +673,16 @@
     },
     {
         "category": "МАЛЬЧИКИ",
-        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
+        "subcategory": "ACTIVEWEAR",
         "id": 2190406,
         "url": "https://www.zara.com/kz/ru/category/2190406/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "PACKS",
+        "id": 2189959,
+        "url": "https://www.zara.com/kz/ru/category/2189959/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -844,6 +732,20 @@
         "subcategory": "SPECIAL PRICES",
         "id": 2190481,
         "url": "https://www.zara.com/kz/ru/category/2190481/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ ДЕВОЧКИ",
+        "subcategory": "SPECIAL OCCASION",
+        "id": 2197172,
+        "url": "https://www.zara.com/kz/ru/category/2197172/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ ДЕВОЧКИ",
+        "subcategory": "HOLIDAYS MOOD",
+        "id": 2197190,
+        "url": "https://www.zara.com/kz/ru/category/2197190/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -932,9 +834,23 @@
     },
     {
         "category": "МАЛЫШИ ДЕВОЧКИ",
+        "subcategory": "ГЕРОИ МУЛЬТФИЛЬМОВ",
+        "id": 2196770,
+        "url": "https://www.zara.com/kz/ru/category/2196770/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ ДЕВОЧКИ",
         "subcategory": "MATCHING SETS",
         "id": 2196743,
         "url": "https://www.zara.com/kz/ru/category/2196743/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ ДЕВОЧКИ",
+        "subcategory": "ПЛАВКИ",
+        "id": 2196777,
+        "url": "https://www.zara.com/kz/ru/category/2196777/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -981,6 +897,20 @@
     },
     {
         "category": "МАЛЫШИ МАЛЬЧИКИ",
+        "subcategory": "SPECIAL OCCASION",
+        "id": 2199851,
+        "url": "https://www.zara.com/kz/ru/category/2199851/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ МАЛЬЧИКИ",
+        "subcategory": "HOLIDAYS MOOD",
+        "id": 2199857,
+        "url": "https://www.zara.com/kz/ru/category/2199857/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ МАЛЬЧИКИ",
         "subcategory": "НОВИНКИ",
         "id": 2194699,
         "url": "https://www.zara.com/kz/ru/category/2194699/products?ajax=true",
@@ -1016,6 +946,13 @@
     },
     {
         "category": "МАЛЫШИ МАЛЬЧИКИ",
+        "subcategory": "ШОРТЫ",
+        "id": 2194805,
+        "url": "https://www.zara.com/kz/ru/category/2194805/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ МАЛЬЧИКИ",
         "subcategory": "ДЖИНСЫ",
         "id": 2194776,
         "url": "https://www.zara.com/kz/ru/category/2194776/products?ajax=true",
@@ -1044,6 +981,13 @@
     },
     {
         "category": "МАЛЫШИ МАЛЬЧИКИ",
+        "subcategory": "КОМПЛЕКТЫ | НАБОРЫ",
+        "id": 2194814,
+        "url": "https://www.zara.com/kz/ru/category/2194814/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ МАЛЬЧИКИ",
         "subcategory": "СПОРТИВНЫЙ КОСТЮМ",
         "id": 2194818,
         "url": "https://www.zara.com/kz/ru/category/2194818/products?ajax=true",
@@ -1061,6 +1005,13 @@
         "subcategory": "ГЕРОИ МУЛЬТФИЛЬМОВ",
         "id": 2194838,
         "url": "https://www.zara.com/kz/ru/category/2194838/products?ajax=true",
+        "sectionName": "KID"
+    },
+    {
+        "category": "МАЛЫШИ МАЛЬЧИКИ",
+        "subcategory": "ПЛАВКИ",
+        "id": 2194841,
+        "url": "https://www.zara.com/kz/ru/category/2194841/products?ajax=true",
         "sectionName": "KID"
     },
     {
@@ -1121,13 +1072,6 @@
     },
     {
         "category": "АКСЕССУАРЫ | ОБУВЬ",
-        "subcategory": "COSTUMES",
-        "id": 2203607,
-        "url": "https://www.zara.com/kz/ru/category/2203607/products?ajax=true",
-        "sectionName": "KID"
-    },
-    {
-        "category": "АКСЕССУАРЫ | ОБУВЬ",
         "subcategory": "ШАПКИ | ЧЕПЧИКИ",
         "id": 2203614,
         "url": "https://www.zara.com/kz/ru/category/2203614/products?ajax=true",
@@ -1163,16 +1107,16 @@
     },
     {
         "category": "АКСЕССУАРЫ | ОБУВЬ",
-        "subcategory": "Сумки и рюкзаки",
-        "id": 2203662,
-        "url": "https://www.zara.com/kz/ru/category/2203662/products?ajax=true",
+        "subcategory": "COSTUMES",
+        "id": 2203607,
+        "url": "https://www.zara.com/kz/ru/category/2203607/products?ajax=true",
         "sectionName": "KID"
     },
     {
-        "category": "ДЕТИ",
-        "subcategory": "TRUE NEUTRALS",
-        "id": 2122882,
-        "url": "https://www.zara.com/kz/ru/category/2122882/products?ajax=true",
+        "category": "АКСЕССУАРЫ | ОБУВЬ",
+        "subcategory": "Сумки и рюкзаки",
+        "id": 2203662,
+        "url": "https://www.zara.com/kz/ru/category/2203662/products?ajax=true",
         "sectionName": "KID"
     }
 ]
