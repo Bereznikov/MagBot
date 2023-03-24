@@ -1,7 +1,11 @@
 import requests
 from fake_useragent import UserAgent
+from TelegramBot.db_connection import PostgresConnection
 import json
-import os
+import psycopg2.extras
+
+
+# import json
 
 
 def make_headers():
@@ -14,32 +18,77 @@ def dump_to_file(data, file_name):
         json.dump(data, file, indent=4, ensure_ascii=False)
 
 
-def make_full_categories_links(url, file_name):
-    full_categories = requests.get(url=url, headers=make_headers())
-    dump_to_file(data=full_categories.json(), file_name=file_name)
-    print('Получил грязные категории')
+def product_ids_in_db(conn):
+    with conn.connection.cursor() as cur:
+        select_query = 'SELECT product_id, category_id FROM product WHERE shop_id=1'
+        cur.execute(select_query)
+        records = cur.fetchall()
+        products_ids = {}
+        for rec in records:
+            products_ids[rec[0]] = rec[1]
+        return products_ids
 
 
-def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name):
+def categories_ids_in_db(conn):
+    with conn.connection.cursor() as cur:
+        select_query = 'SELECT category_id FROM category'
+        cur.execute(select_query)
+        records = cur.fetchall()
+        categories_ids = set(rec[0] for rec in records)
+        return categories_ids
+
+
+def new_categories(zara_categories):
+    new_categories_list = []
+    for category in zara_categories:
+        if category['is_new']:
+            section_id = category['section_id']
+            category_name = category['subcategory']
+            category_id = category['id']
+            new_categories_list.append((category_id, category_name, section_id))
+    return new_categories_list
+
+
+def insert_categories(conn, categories):
+    conn.strong_check()
+    with conn.connection.cursor() as cur:
+        insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
+        psycopg2.extras.execute_batch(cur, insert_query, categories)
+
+
+def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name, db_categories):
     try:
         section_name = subcategory['sectionName']
     except KeyError:
-        section_name = None
-    if subcategory['id'] not in unique_category_ids:
+        return
+    sub_category_ap = str(subcategory['id'])
+    if sub_category_ap not in unique_category_ids:
         subcategory_url = f'https://www.zara.com/kz/ru/category/{subcategory["id"]}/products?ajax=true'
+        section_name_id = {
+            'ЖЕНЩИНЫ': 1,
+            'МУЖЧИНЫ': 2,
+            'МАЛЫШИ ДЕВОЧКИ': 3,
+            'МАЛЫШИ МАЛЬЧИК': 3,
+            'ДЛЯ МАЛЫШЕЙ': 3,
+            'ДЕВОЧКИ': 4,
+            'МАЛЬЧИКИ': 5,
+            'ДЛЯ ДОМА': 6
+        }
+        category_name_ap = category['name'].replace(' ', ' ')
+        section_id = section_name_id.get(category_name_ap) or 123
         zara_categories.append({
-            'category': category['name'].replace(' ', ' '),
-            'subcategory': category_name.strip(),
-            'id': subcategory['id'],
+            'category': category_name_ap,
+            'subcategory': category_name.strip().upper(),
+            'id': sub_category_ap,
             'url': subcategory_url,
-            'sectionName': section_name
+            'section_name': section_name,
+            'section_id': section_id,
+            'is_new': sub_category_ap not in db_categories
         })
-        unique_category_ids.add(subcategory['id'])
+        unique_category_ids.add(sub_category_ap)
 
 
-def clean_categories_links(file_from, file_to):
-    with open(file_from, "r") as file:
-        zara_categories = json.load(file)
+def clean_categories_links(zara_categories):
     clean_categories = []
     for i, category in enumerate(zara_categories):
         print(f'[+] ЧИЩУ ЛИНКИ {i + 1}/{len(zara_categories)} {category["url"]}')
@@ -48,72 +97,61 @@ def clean_categories_links(file_from, file_to):
             continue
         else:
             clean_categories.append(category)
-    dump_to_file(clean_categories, file_to)
+    return clean_categories
 
 
-def check_all_subcategory(category, zara_categories, original, unique_ids, category_name=''):
+def check_all_subcategory(category, zara_categories, original, unique_ids, category_name, db_categories):
     for subcategory in category['subcategories']:
         tmp_subcategory = subcategory['name'].replace(' ', ' ')
-        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}')
-        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}')
+        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}',
+                               db_categories)
+        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}',
+                              db_categories)
 
 
-def make_categories_links(url):
-    make_full_categories_links(url, 'zara_categories_full.json')
-
-    with open("zara_categories_full.json", "r") as file:
-        zara_categories_full = json.load(file)['categories']
-
+def make_categories_links(url, db_categories):
+    full_categories_links = requests.get(url=url, headers=make_headers()).json()
+    zara_categories_full = full_categories_links['categories']
     zara_categories = []
     unique_category_ids = set()
 
     for category in zara_categories_full:
         if category['name'] != 'ДЕТИ':
-            check_all_subcategory(category, zara_categories, category, unique_category_ids)
+            check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
 
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
-        check_all_subcategory(category, zara_categories, category, unique_category_ids)
-
-    dirty_file_name = 'zara_categories_flat.json'
-    clean_file_name = 'zara_categories.json'
-    dump_to_file(data=zara_categories, file_name=dirty_file_name)
-    print('Сделал плосские категории')
-
-    clean_categories_links(dirty_file_name, clean_file_name)
+        check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
+    # print('Сделал плосские категории')
+    return clean_categories_links(zara_categories)
 
 
-def get_product(file_name):
-    with open(file_name, 'r') as file:
-        zara_categories = json.load(file)
-    if not os.path.exists('products'):
-        os.mkdir('products')
-
-    products_zara = []
-    unique_product_ids = set()
+def get_product(zara_categories, db_products_ids):
+    new_products_zara = []
+    update_category_products = []
+    unique_product_ids = {}
     for i, category in enumerate(zara_categories):
-        print(f'[+] Обработка {i}/{len(zara_categories)} {category["subcategory"]}')
+        print(f'[+] Обработка {i + 1}/{len(zara_categories)} {category["subcategory"]} {category["id"]}')
         id = category['id']
         url = category['url']
-        get_product_from_category(products_zara, url, id, unique_product_ids)
-    print(len(unique_product_ids))
-    return products_zara
+        get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
+                                  unique_product_ids)
+
+    return new_products_zara, update_category_products
 
 
-def get_product_from_category(products_zara, url, id, unique_product_ids):
+def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
+                              unique_product_ids):
     category_info = requests.get(url=url, headers=make_headers()).json()
-    dump_to_file(data=category_info, file_name=f'products/category_{id}.json')
-    with open(f'products/category_{id}.json', 'r') as file:
-        loaded_file = json.load(file)
-        elements = loaded_file['productGroups'][0]['elements']
+    elements = category_info['productGroups'][0]['elements']
     for el_num, elem in enumerate(elements):
         try:
             commercialComponents = elem['commercialComponents']
         except KeyError:
-            commercialComponents = None
             continue
         except Exception as ex:
             print('WTF IS HAPPENING?!', ex, ex.__class__)
+            continue
         for comp in commercialComponents:
             if comp['type'] != 'Bundle':
                 try:
@@ -128,28 +166,98 @@ def get_product_from_category(products_zara, url, id, unique_product_ids):
                                 f'.html?v1={seo["discernProductId"]}'
                 except IndexError:
                     link_path = None
-
-                if comp.get('id') in unique_product_ids:
+                # if comp.get('id') is None:
+                #     print("ЧТО_ТО УЖАСНОЕ, ТАКОГО ТОВАРА НЕТ", comp)
+                #     continue
+                product_id = str(comp['id'])
+                if product_id in unique_product_ids:
                     continue
-
-                products_zara.append({
-                    'id': comp.get('id'),
-                    'name': comp.get('name'),
+                unique_product_ids[product_id] = id
+                if db_products_ids.get(product_id) and db_products_ids[product_id] != id:
+                    print(
+                        f'Было product_id {product_id} category_id:{db_products_ids[product_id]}, новая категория {id}')
+                    update_product_categories.append((id, product_id))
+                    unique_product_ids[product_id] = id
+                    continue
+                if product_id in db_products_ids:
+                    continue
+                new_products_zara.append({
+                    'product_id': product_id,
+                    'product_name': comp.get('name'),
                     'price': comp.get('price') // 100,
-                    'link': link_path,
-                    'image_path': image_path,
-                    'availability': comp.get('availability'),
+                    'product_link': link_path,
+                    'image_link': image_path,
+                    'availability': comp.get('availability') == 'in_stock',
                     'description': comp.get('description'),
-                    'section': comp.get('section'),
                     'category_id': id,
                 })
-                unique_product_ids.add(comp.get('id'))
+                unique_product_ids[product_id] = id
+
+
+def insert_into_product(conn, new_products_zara):
+    # with open(products_file, 'r') as file:
+    #     new_products_zara = json.load(file)
+    conn.strong_check()
+    products_list = []
+    for product in new_products_zara:
+        id = product.get('product_id')
+        name = product.get('product_name')
+        price = product.get('price')
+        price_high = None
+        link = product.get('product_link')
+        image = product.get('image_link')
+        category = product.get('category_id')
+        shop_id = 1
+        description = product.get('description')
+        availability = product.get('availability')
+        _tmp_tuple = (id, name, price, price_high, link, image, category, shop_id, description, availability)
+        products_list.append(_tmp_tuple)
+    with conn.connection.cursor() as cur:
+        insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+        psycopg2.extras.execute_batch(cur, insert_query, products_list)
+
+
+def update_product_category(conn, update_category_products):
+    # with open(file_name, 'r') as file:
+    #     update_category_products = json.load(file)
+    pg_con = PostgresConnection()
+
+    with pg_con.connection.cursor() as cur:
+        for record in update_category_products:
+            cur.execute(""" UPDATE product SET category_id=%s WHERE product_id=%s""", (record[0], record[1],))
+            pg_con.connection.commit()
+        # cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
+        # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
+        # update_query = """ UPDATE product SET category_id=%s WHERE product_id=%s"""
+        # psycopg2.extras.execute_values(cur, update_query, update_category_products)
+
+
+def update_product_availability(conn, update_products_availability):
+    conn.strong_check()
+    with conn.connection.cursor() as cur:
+        update_query = """ UPDATE product SET availability=false WHERE product_id=%s"""
+        psycopg2.extras.execute_values(cur, update_query, update_products_availability)
 
 
 def main():
-    make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true')
-    zara_products = get_product('zara_categories.json')
-    dump_to_file(file_name='zara_products.json', data=zara_products)
+    pg_con = PostgresConnection()
+    db_products_ids = product_ids_in_db(pg_con)
+    db_categories = categories_ids_in_db(pg_con)
+
+    zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',
+                                            db_categories)
+    new_categories_list = new_categories(zara_categories)
+    insert_categories(pg_con, new_categories_list)
+
+    new_products_zara, update_category_products = get_product(zara_categories, db_products_ids)
+    # dump_to_file(file_name='zara_products.json', data=new_products_zara)
+    # dump_to_file(file_name='zara_products_update_category.json', data=update_category_products)
+
+    insert_into_product(pg_con, new_products_zara)
+    print('Заинсертил', len(new_products_zara))
+
+    update_product_category(pg_con, update_category_products)
+    print("Заапдейтил", len(update_category_products))
 
 
 if __name__ == '__main__':
