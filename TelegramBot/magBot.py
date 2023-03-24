@@ -27,10 +27,10 @@ SHOP, SECTION, SELECTION, CATEGORY, RESTART, ADDRESS, CHECKOUT, CART = range(8)
 
 async def start(update, context):
     user = update.effective_user
-    reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
+    reply_keyboard = [["Zara", "Next"]]
     logger.info('%s стартанул бота', user.first_name)
     await update.message.reply_text(
-        f"Добро пожаловать в бот для покупки вещей ЯБерезка, {user.username} \n"
+        f"Добро пожаловать в бот для покупки вещей из магазинов Zara и Next, {user.username} \n"
         "Из какого магазина хотите заказать одежду?",
         reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True),
     )
@@ -43,7 +43,7 @@ async def start(update, context):
 async def restart(update, context):
     user = update.effective_user
     context.user_data[user.id].connection.strong_check()
-    reply_keyboard = [["Zara", "Next", "От тети Глаши"]]
+    reply_keyboard = [["Zara", "Next"]]
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
         reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True))
