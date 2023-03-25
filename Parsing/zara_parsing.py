@@ -5,9 +5,6 @@ import json
 import psycopg2.extras
 
 
-# import json
-
-
 def make_headers():
     ua = UserAgent()
     return {'User-Agent': ua.random}
@@ -20,12 +17,12 @@ def dump_to_file(data, file_name):
 
 def product_ids_in_db(conn):
     with conn.connection.cursor() as cur:
-        select_query = 'SELECT product_id, category_id FROM product WHERE shop_id=1'
+        select_query = 'SELECT product_id, category_id, availability FROM product WHERE shop_id=1'
         cur.execute(select_query)
         records = cur.fetchall()
         products_ids = {}
         for rec in records:
-            products_ids[rec[0]] = rec[1]
+            products_ids[rec[0]] = rec[1], rec[2]
         return products_ids
 
 
@@ -122,7 +119,6 @@ def make_categories_links(url, db_categories):
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
         check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-    # print('Сделал плосские категории')
     return clean_categories_links(zara_categories)
 
 
@@ -130,14 +126,22 @@ def get_product(zara_categories, db_products_ids):
     new_products_zara = []
     update_category_products = []
     unique_product_ids = {}
+    availability_false_product_ids = set()
+    availability_true_product_ids = set()
     for i, category in enumerate(zara_categories):
         print(f'[+] Обработка {i + 1}/{len(zara_categories)} {category["subcategory"]} {category["id"]}')
         id = category['id']
         url = category['url']
         get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
                                   unique_product_ids)
+    for product in db_products_ids:
+        if (product not in unique_product_ids) and db_products_ids[product][1]:
+            availability_false_product_ids.add(product)
+        if (product in unique_product_ids) and not db_products_ids[product][1]:
+            availability_true_product_ids.add(product)
 
-    return new_products_zara, update_category_products
+    return new_products_zara, update_category_products, list(availability_false_product_ids), list(
+        availability_true_product_ids)
 
 
 def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
@@ -166,16 +170,13 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
                                 f'.html?v1={seo["discernProductId"]}'
                 except IndexError:
                     link_path = None
-                # if comp.get('id') is None:
-                #     print("ЧТО_ТО УЖАСНОЕ, ТАКОГО ТОВАРА НЕТ", comp)
-                #     continue
                 product_id = str(comp['id'])
                 if product_id in unique_product_ids:
                     continue
                 unique_product_ids[product_id] = id
-                if db_products_ids.get(product_id) and db_products_ids[product_id] != id:
-                    print(
-                        f'Было product_id {product_id} category_id:{db_products_ids[product_id]}, новая категория {id}')
+                if db_products_ids.get(product_id) and db_products_ids[product_id][0] != id:
+                    # print(f'Было product_id {product_id} category_id:{db_products_ids[product_id][0]},'
+                    #       f' новая категория {id}')
                     update_product_categories.append((id, product_id))
                     unique_product_ids[product_id] = id
                     continue
@@ -195,8 +196,6 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
 
 
 def insert_into_product(conn, new_products_zara):
-    # with open(products_file, 'r') as file:
-    #     new_products_zara = json.load(file)
     conn.strong_check()
     products_list = []
     for product in new_products_zara:
@@ -218,29 +217,40 @@ def insert_into_product(conn, new_products_zara):
 
 
 def update_product_category(conn, update_category_products):
-    # with open(file_name, 'r') as file:
-    #     update_category_products = json.load(file)
-    pg_con = PostgresConnection()
-
-    with pg_con.connection.cursor() as cur:
+    conn.strong_check()
+    with conn.connection.cursor() as cur:
         for record in update_category_products:
             cur.execute(""" UPDATE product SET category_id=%s WHERE product_id=%s""", (record[0], record[1],))
-            pg_con.connection.commit()
+            conn.connection.commit()
         # cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
         # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
         # update_query = """ UPDATE product SET category_id=%s WHERE product_id=%s"""
         # psycopg2.extras.execute_values(cur, update_query, update_category_products)
 
 
-def update_product_availability(conn, update_products_availability):
+def update_product_availability(conn, availability_false_product_ids):
     conn.strong_check()
     with conn.connection.cursor() as cur:
-        update_query = """ UPDATE product SET availability=false WHERE product_id=%s"""
-        psycopg2.extras.execute_values(cur, update_query, update_products_availability)
+        for id in availability_false_product_ids:
+            cur.execute(""" UPDATE product SET availability=false WHERE product_id=%s""", (id,))
+            conn.connection.commit()
+        # cur.execute("PREPARE updateStmtAv AS UPDATE product SET availability=false WHERE product_id=$1")
+        # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmtAv (%s)", availability_false_product_ids)
+        # update_query = """ UPDATE product SET availability=false WHERE product_id=%s"""
+        # psycopg2.extras.execute_values(cur, update_query, availability_false_product_ids)
+
+
+def update_product_availability_true(conn, availability_true_product_ids):
+    conn.strong_check()
+    with conn.connection.cursor() as cur:
+        for id in availability_true_product_ids:
+            cur.execute(""" UPDATE product SET availability=true WHERE product_id=%s""", (id,))
+            conn.connection.commit()
 
 
 def main():
     pg_con = PostgresConnection()
+
     db_products_ids = product_ids_in_db(pg_con)
     db_categories = categories_ids_in_db(pg_con)
 
@@ -248,16 +258,22 @@ def main():
                                             db_categories)
     new_categories_list = new_categories(zara_categories)
     insert_categories(pg_con, new_categories_list)
+    print('Заинсертил новые категории', len(new_categories_list))
 
-    new_products_zara, update_category_products = get_product(zara_categories, db_products_ids)
-    # dump_to_file(file_name='zara_products.json', data=new_products_zara)
-    # dump_to_file(file_name='zara_products_update_category.json', data=update_category_products)
-
+    new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
+        get_product(zara_categories, db_products_ids)
+    print(len(availability_false_product_ids))
     insert_into_product(pg_con, new_products_zara)
     print('Заинсертил', len(new_products_zara))
 
     update_product_category(pg_con, update_category_products)
-    print("Заапдейтил", len(update_category_products))
+    print("Заапдейтил категории", len(update_category_products))
+
+    update_product_availability(pg_con, availability_false_product_ids)
+    print("Заапдейтил в наличии False", len(availability_false_product_ids))
+
+    update_product_availability_true(pg_con, availability_true_product_ids)
+    print("Заапдейтил в наличии True", len(availability_true_product_ids))
 
 
 if __name__ == '__main__':
