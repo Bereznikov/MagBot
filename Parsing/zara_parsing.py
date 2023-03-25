@@ -51,6 +51,7 @@ def insert_categories(conn, categories):
     with conn.connection.cursor() as cur:
         insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
         psycopg2.extras.execute_batch(cur, insert_query, categories)
+        conn.connection.commit()
 
 
 def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name, db_categories):
@@ -115,7 +116,6 @@ def make_categories_links(url, db_categories):
     for category in zara_categories_full:
         if category['name'] != 'ДЕТИ':
             check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
         check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
@@ -134,10 +134,11 @@ def get_product(zara_categories, db_products_ids):
         url = category['url']
         get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
                                   unique_product_ids)
+
     for product in db_products_ids:
         if (product not in unique_product_ids) and db_products_ids[product][1]:
             availability_false_product_ids.add(product)
-        if (product in unique_product_ids) and not db_products_ids[product][1]:
+        if product in unique_product_ids and unique_product_ids[product][1] and not db_products_ids[product][1]:
             availability_true_product_ids.add(product)
 
     return new_products_zara, update_category_products, list(availability_false_product_ids), list(
@@ -171,15 +172,20 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
                 except IndexError:
                     link_path = None
                 product_id = str(comp['id'])
+
                 if product_id in unique_product_ids:
                     continue
-                unique_product_ids[product_id] = id
-                if db_products_ids.get(product_id) and db_products_ids[product_id][0] != id:
+                availability = comp.get('availability') == 'in_stock'
+                unique_product_ids[product_id] = id, availability
+
+                if product_id in db_products_ids and db_products_ids[product_id][0] != id:
                     # print(f'Было product_id {product_id} category_id:{db_products_ids[product_id][0]},'
                     #       f' новая категория {id}')
-                    update_product_categories.append((id, product_id))
-                    unique_product_ids[product_id] = id
+                    update_product_categories.append((id, product_id, availability))
+                    # unique_product_ids[product_id] = id
                     continue
+                # if product_id in db_products_ids and and not availability:
+                #     continue
                 if product_id in db_products_ids:
                     continue
                 new_products_zara.append({
@@ -188,7 +194,7 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
                     'price': comp.get('price') // 100,
                     'product_link': link_path,
                     'image_link': image_path,
-                    'availability': comp.get('availability') == 'in_stock',
+                    'availability': availability,
                     'description': comp.get('description'),
                     'category_id': id,
                 })
@@ -220,7 +226,8 @@ def update_product_category(conn, update_category_products):
     conn.strong_check()
     with conn.connection.cursor() as cur:
         for record in update_category_products:
-            cur.execute(""" UPDATE product SET category_id=%s WHERE product_id=%s""", (record[0], record[1],))
+            cur.execute(""" UPDATE product SET category_id=%s, availability=%s WHERE product_id=%s""",
+                        (record[0], record[2], record[1],))
             conn.connection.commit()
         # cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
         # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
@@ -262,7 +269,6 @@ def main():
 
     new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
         get_product(zara_categories, db_products_ids)
-    print(len(availability_false_product_ids))
     insert_into_product(pg_con, new_products_zara)
     print('Заинсертил', len(new_products_zara))
 
