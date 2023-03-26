@@ -184,7 +184,7 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
                     update_product_categories.append((id, product_id, availability))
                     # unique_product_ids[product_id] = id
                     continue
-                # if product_id in db_products_ids and and not availability:
+                # if product_id in db_products_ids and not availability:
                 #     continue
                 if product_id in db_products_ids:
                     continue
@@ -260,6 +260,7 @@ def main():
 
     db_products_ids = product_ids_in_db(pg_con)
     db_categories = categories_ids_in_db(pg_con)
+    print('Собрал с БД')
 
     zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',
                                             db_categories)
