@@ -260,7 +260,7 @@ def main():
 
     db_products_ids = product_ids_in_db(pg_con)
     db_categories = categories_ids_in_db(pg_con)
-    print('Собрал с БД')
+    print('Собрал с Базы данных')
 
     zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',
                                             db_categories)
