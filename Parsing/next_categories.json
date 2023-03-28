@@ -1,0 +1,697 @@
+[
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КОМБИНЕЗОНЫ И ПИЖАМЫ",
+        "id": "NXT0001"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "БОДИ И МАЙКИ",
+        "id": "NXT0002"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КУРТКИ И ПАЛЬТО",
+        "id": "NXT0003"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ПЛАТЬЯ",
+        "id": "NXT0004"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ДЖИНСЫ",
+        "id": "NXT0005"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КОМБИНЕЗОНЫ И КОСТЮМЫ",
+        "id": "NXT0006"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ДЖЕМПЕРЫ И ТРИКОТАЖ",
+        "id": "NXT0007"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ОДЕЖДА ДЛЯ СНА И ПИЖАМЫ",
+        "id": "NXT0008"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ОДЕЖДА ПО СЛУЧАЮ",
+        "id": "NXT0009"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "НАБОРЫ И КОМПЛЕКТЫ",
+        "id": "NXT0010"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "РУБАШКИ И БЛУЗКИ",
+        "id": "NXT0011"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ШОРТЫ И ЮБКИ",
+        "id": "NXT0012"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "НОСКИ И КОЛГОТКИ",
+        "id": "NXT0013"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
+        "id": "NXT0014"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "СВИТЕРА И ТОЛСТОВКИ",
+        "id": "NXT0015"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КУПАЛЬНИКИ И ПЛЯЖНАЯ ОДЕЖДА",
+        "id": "NXT0016"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ФУТБОЛКИ",
+        "id": "NXT0017"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ТОПЫ",
+        "id": "NXT0018"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "БРЮКИ И ЛЕГГИНСЫ",
+        "id": "NXT0019"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "НИЖНЕЕ БЕЛЬЕ",
+        "id": "NXT0020"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "СУМКИ",
+        "id": "NXT0021"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ШАПКИ, ПЕРЧАТКИ И ШАРФЫ",
+        "id": "NXT0022"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "СУМКИ ДЛЯ ЗАВТРАКА И БУТЫЛКИ ДЛЯ НАПИТКОВ",
+        "id": "NXT0023"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "КАНЦЕЛЯРСКИЕ ПРИНАДЛЕЖНОСТИ",
+        "id": "NXT0024"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "САПОГИ И БОТИНКИ",
+        "id": "NXT0025"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ПИНЕТКИ",
+        "id": "NXT0026"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "МАЛЫШИ",
+        "id": "NXT0027"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "ОБУВЬ ДЛЯ МАЛЫШЕЙ",
+        "id": "NXT0028"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "СПОРТИВНАЯ ОБУВЬ ",
+        "id": "NXT0029"
+    },
+    {
+        "category": "ДЕВОЧКИ",
+        "subcategory": "РЕЗИНОВЫЕ САПОГИ ",
+        "id": "NXT0030"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КОМБИНЕЗОНЫ И ПИЖАМЫ ",
+        "id": "NXT0031"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "БОДИ И МАЙКИ",
+        "id": "NXT0032"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КУРТКИ И ПАЛЬТО",
+        "id": "NXT0033"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ДЖИНСЫ",
+        "id": "NXT0034"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СПОРТИВНЫЕ ШТАНЫ",
+        "id": "NXT0035"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ДЖЕМПЕРЫ И ТРИКОТАЖ",
+        "id": "NXT0036"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ОДЕЖДА ДЛЯ СНА И ПИЖАМЫ",
+        "id": "NXT0037"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ОДЕЖДА ПО СЛУЧАЮ",
+        "id": "NXT0038"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "НАБОРЫ И КОМПЛЕКТЫ",
+        "id": "NXT0039"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "РУБАШКИ",
+        "id": "NXT0040"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ШОРТЫ",
+        "id": "NXT0041"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "НОСКИ",
+        "id": "NXT0042"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
+        "id": "NXT0043"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КОСТЮМЫ И ЖИЛЕТЫ",
+        "id": "NXT0044"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СВИТЕРА И ТОЛСТОВКИ",
+        "id": "NXT0045"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КУПАЛЬНИКИ И ПЛЯЖНАЯ ОДЕЖДА",
+        "id": "NXT0046"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ФУТБОЛКИ",
+        "id": "NXT0047"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ТОПЫ",
+        "id": "NXT0048"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СПОРТИВНЫЙ КОСТЮМ",
+        "id": "NXT0049"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "БРЮКИ И ЧИНОСЫ",
+        "id": "NXT0050"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "НИЖНЕЕ БЕЛЬЕ",
+        "id": "NXT0051"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "САПОГИ И БОТИНКИ",
+        "id": "NXT0052"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "МАЛЫШИ",
+        "id": "NXT0053"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ОБУВЬ ДЛЯ МАЛЫШЕЙ",
+        "id": "NXT0054"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СПОРТИВНАЯ ОБУВЬ ",
+        "id": "NXT0055"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "РЕЗИНОВЫЕ САПОГИ",
+        "id": "NXT0056"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "СУМКИ",
+        "id": "NXT0057"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ШАПКИ, ПЕРЧАТКИ И ШАРФЫ",
+        "id": "NXT0058"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КОНТЕЙНЕРЫ ДЛЯ ЕДЫ И БУТЫЛКИ ДЛЯ НАПИТКОВ",
+        "id": "NXT0059"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "КАНЦЕЛЯРСКИЕ ПРИНАДЛЕЖНОСТИ",
+        "id": "NXT0060"
+    },
+    {
+        "category": "МАЛЬЧИКИ",
+        "subcategory": "ГАЛСТУКИ",
+        "id": "NXT0061"
+    },
+    {
+        "category": "ДЛЯ МАЛЫШЕЙ",
+        "subcategory": "СЛЮНЯВЧИКИ",
+        "id": "NXT0062"
+    },
+    {
+        "category": "ДЛЯ МАЛЫШЕЙ",
+        "subcategory": "ОДЕЯЛА",
+        "id": "NXT0063"
+    },
+    {
+        "category": "ДЛЯ МАЛЫШЕЙ",
+        "subcategory": "ШАПКИ И ВАРЕЖКИ-ЦАРАПКИ",
+        "id": "NXT0064"
+    },
+    {
+        "category": "ДЛЯ МАЛЫШЕЙ",
+        "subcategory": "ОБУВЬ ДЛЯ МАЛЫШЕЙ",
+        "id": "NXT0065"
+    },
+    {
+        "category": "ДЛЯ МАЛЫШЕЙ",
+        "subcategory": "ОБУВЬ НА ПЕРВЫЙ ШАГ",
+        "id": "NXT0066"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "БЛЕЙЗЕРЫ",
+        "id": "NXT0067"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "РУБАШКИ И БЛУЗКИ",
+        "id": "NXT0068"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КУРТКИ И ПАЛЬТО",
+        "id": "NXT0069"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ПЛАТЬЯ",
+        "id": "NXT0070"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ХУДИ И СПОРТИВНЫЕ ТОПЫ",
+        "id": "NXT0071"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ДЖИНСЫ",
+        "id": "NXT0072"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ДЖЕМПЕРЫ И КАРДИГАНЫ",
+        "id": "NXT0073"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КОМБИНЕЗОНЫ И КОСТЮМЫ",
+        "id": "NXT0074"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ЛЕГГИНСЫ И СПОРТИВНЫЕ БРЮКИ",
+        "id": "NXT0075"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ЮБКИ",
+        "id": "NXT0076"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
+        "id": "NXT0077"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КОСТЮМЫ И ПОШИВ",
+        "id": "NXT0078"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ПЛЯЖНАЯ КОЛЛЕКЦИЯ",
+        "id": 2188006
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ФУТБОЛКИ И ТОПЫ",
+        "id": "NXT0079"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "БРЮКИ",
+        "id": "NXT0080"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ВСЕ ДАМСКОЕ БЕЛЬЕ & НИЖНЕЕ БЕЛЬЕ",
+        "id": "NXT0081"
+    },
+	{
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "САПОГИ И БОТИНКИ",
+        "id": 2187777
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ТУФЛИ НА ПЛОСКОЙ ПОДОШВЕ",
+        "id": "NXT0082"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ТУФЛИ НА КАБЛУКЕ",
+        "id": "NXT0083"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "САНДАЛИИ",
+        "id": "NXT0084"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "КРОССОВКИ",
+        "id": "NXT0085"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "СУМКИ, КОШЕЛЬКИ ЧЕМОДАНЫ",
+        "id": "NXT0086"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "ШАПКИ, ПЕРЧАТКИ И ШАРФЫ",
+        "id": "NXT0087"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "БИЖУТЕРИЯ И ЧАСЫ",
+        "id": "NXT0088"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "НОСКИ И КОЛГОТКИ",
+        "id": "NXT0089"
+    },
+    {
+        "category": "ЖЕНЩИНЫ",
+        "subcategory": "СОЛНЦЕЗАЩИТНЫЕ ОЧКИ",
+        "id": "NXT0090"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "КУРТКИ И ПАЛЬТО ",
+        "id": "NXT0091"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ДЖИНСЫ",
+        "id": "NXT0092"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СПОРТИВНЫЕ ШТАНЫ",
+        "id": "NXT0093"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ДЖЕМПЕРЫ И КАРДИГАНЫ",
+        "id": "NXT0094"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ДОМАШНЯЯ ОДЕЖДА",
+        "id": "NXT0095"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ПИЖАМЫ И ОДЕЖДА ДЛЯ СНА",
+        "id": "NXT0096"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "РУБАШКИ",
+        "id": "NXT0097"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ШОРТЫ И ПЛЯЖНАЯ ОДЕЖДА",
+        "id": "NXT0098"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "НОСКИ",
+        "id": "NXT0099"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СПОРТИВНАЯ ОДЕЖДА",
+        "id": "NXT0100"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "КОСТЮМЫ",
+        "id": "NXT0101"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СВИТЕРА И ТОЛСТОВКИ",
+        "id": "NXT0102"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "БРЮКИ И ЧИНОСЫ",
+        "id": "NXT0103"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ФУТБОЛКИ И ПОЛО ",
+        "id": "NXT0104"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "НИЖНЕЕ БЕЛЬЕ",
+        "id": "NXT0105"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "САПОГИ И БОТИНКИ",
+        "id": "NXT0106"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ОБУВЬ",
+        "id": "NXT0107"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "САНДАЛИИ И ШЛЕПАНЦЫ",
+        "id": "NXT0108"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "КРОССОВКИ",
+        "id": "NXT0109"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "БЛЕЙЗЕРЫ И ДЕЛОВЫЕ ПИДЖАКИ",
+        "id": "NXT0110"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ДЕЛОВЫЕ РУБАШКИ",
+        "id": "NXT0111"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СТРОГИЕ БРЮКИ",
+        "id": "NXT0112"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ЛЬНЯНЫЕ КОСТЮМЫ",
+        "id": "NXT0113"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ЗАПОНКИ И ЗАЖИМЫ ДЛЯ ГАЛСТУКА ",
+        "id": "NXT0114"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ГАЛСТУКИ И ПЛАТКИ",
+        "id": "NXT0115"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ЖИЛЕТЫ",
+        "id": "NXT0116"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СУМКИ",
+        "id": "NXT0117"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "РЕМНИ И ПОДТЯЖКИ",
+        "id": "NXT0118"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ШАПКИ",
+        "id": "NXT0119"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "ЧЕМОДАНЫ И ДОРОЖНЫЕ АКСЕССУАРЫ",
+        "id": "NXT0120"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "СОЛНЦЕЗАЩИТНЫЕ ОЧКИ",
+        "id": "NXT0121"
+    },
+    {
+        "category": "МУЖЧИНЫ",
+        "subcategory": "КОШЕЛЬКИ",
+        "id": "NXT0122"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ГОСТИНАЯ",
+        "id": "NXT0123"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "СТОЛОВАЯ",
+        "id": "NXT0124"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "СПАЛЬНЯ",
+        "id": "NXT0125"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ДЕТСКАЯ",
+        "id": "NXT0126"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ДЕТСКАЯ КОМНАТА",
+        "id": "NXT0127"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "GARDEN",
+        "id": "NXT0128"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "КУХНЯ",
+        "id": "NXT0129"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ДЛЯ ВАННОЙ",
+        "id": "NXT0130"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ДОМ ОФИС",
+        "id": "NXT0131"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ПРИХОЖАЯ",
+        "id": "NXT0132"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "АКСЕССУАРЫ ДЛЯ САДА",
+        "id": "NXT0133"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ПОДОДЕЯЛЬНИКИ И КОМПЛЕКТЫ",
+        "id": "NXT0134"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ПРОСТЫНИ И НАВОЛОЧКИ",
+        "id": "NXT0135"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "ОДЕЯЛА И ПОДУШКИ",
+        "id": "NXT0136"
+    },
+    {
+        "category": "ДЛЯ ДОМА",
+        "subcategory": "МАТРАСЫ И НАМАТРАСНИКИ",
+        "id": "NXT0137"
+    }
+]
