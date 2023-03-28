@@ -97,7 +97,7 @@ class Parser:
 
     async def get_data(self, session, info_pair, counter):
         section_name = self._section_names[counter]
-        category_name = info_pair[0]
+        category_name = info_pair[0].strip()
         url = info_pair[1]
         for i in range(1, 826):
             pagen_url = url.strip('-0') + '?p=' + str(i)
@@ -153,7 +153,7 @@ class Parser:
                                          'category_name': category_name}
                         if good_dict['id'] not in self.id_set:
                             self.result.append(good_dict)
-                            self.id_set.add(good_dict['id'])
+                            self.id_set.add(good_dict['id'].upper())
                         else:
                             continue
                 else:
@@ -208,42 +208,70 @@ def find_new_ids(obj):
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
             query_result = cur.fetchall()
             for i in set_id:
-                if tuple(i) not in query_result:
+                if i not in map(lambda x: x[0], query_result):
                     new_ids.append(i)
     return new_ids
 
 
-def find_not_actual_items(obj):
+def update_items(obj):
+    counter = 0
     set_id = obj.id_set
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
+            cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = true""")
             query_result = cur.fetchall()
             for item_id in query_result:
                 if item_id[0] not in set_id:
-                    cur.execute("""UPDATE product SET availability = false WHERE product_id = """ + item_id[0])
+                    cur.execute(f"UPDATE product SET availability = false WHERE product_id = '{item_id[0]}'")
+                    counter += 1
+                    print(item_id[0], end=':')
+            cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = false""")
+            query_result = cur.fetchall()
+            for item_id in query_result:
+                if item_id[0] in set_id:
+                    cur.execute(f"UPDATE product SET availability = true WHERE product_id = '{item_id[0]}'")
+                    counter += 1
+                    print(item_id[0], end=';')
+    print()
+    print('Обновлен статус продуктов:', counter)
 
 
 def insert_new_products(new_ids):
     with open('next_updated.json', "r", encoding='utf-8') as file:
         products = json.load(file)
+    products_list = []
     new_products = []
     for i in new_ids:
         for product in products:
             if product['id'] == i:
                 new_products.append(product)
+    ids_set = set()
+    for product in new_products:
+        product_id = product.get('id')
+        name = product.get('name')
+        price = product.get('price_low') or product.get('price')
+        price_high = product.get('price_big')
+        link = product.get('link')
+        image = product.get('image_path')
+        category = product.get('category_id')
+        shop_id = 2
+        description = product.get('description')
+        availability = product.get('availability') == 'in_stock'
+        _tmp_tuple = (product_id, name, price, price_high, link, image, category, shop_id, description, availability)
+        if product_id not in ids_set and category:
+            ids_set.add(product_id)
+            products_list.append(_tmp_tuple)
+        else:
+            print(product_id, category)
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
                           password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
-            for new_product in new_products:
-                cur.execute("""INSERT INTO product (product_id, product_name, price, price_high, product_link, image_link, category_id, shop_id, description, availability)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", (
-                    new_product['id'], new_product['name'], new_product['price_low'], new_product['price_big'],
-                    new_product['link'], new_product['image_path'], new_product['category_id'], 2, None,
-                    True))
+            insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+            psycopg2.extras.execute_batch(cur, insert_query, products_list)
+            print('Добавлено новых продуктов:', len(products_list))
 
 
 if __name__ == '__main__':
@@ -254,6 +282,6 @@ if __name__ == '__main__':
     new_items = find_new_ids(parse_site)
     if new_items:
         print('Появились новые вещи')
-        print(*new_items)
+        print('Количество:', len(new_items))
         insert_new_products(new_items)
-    find_not_actual_items(parse_site)
+    update_items(parse_site)
