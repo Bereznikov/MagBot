@@ -128,7 +128,7 @@ class Parser:
                                              'availability': 'in_stock',
                                              'section_name': section_name,
                                              'category_name': category_name}
-                            except:
+                            except IndexError:
                                 brand, name_id, price, *tale = item.find('a')['aria-label'].split(' | ')
                                 good_name = name_id[:name_id.find(' (')]
                                 good_id = name_id.rstrip(')').lstrip(' (')[-6:]
@@ -172,8 +172,20 @@ class Parser:
                     tasks.append(task)
                 counter += 1
             await asyncio.gather(*tasks)
-        with open('next.json', 'w', encoding='utf-8') as file:
-            json.dump(self.result, file, indent=4, ensure_ascii=False)
+
+    def make_next_json_with_category_id(self):
+        next_product = self.result
+        with open('next_categories_redacted.json', 'r', encoding='utf-8') as file:
+            next_categories = json.load(file)
+        next_categories_dict = {}
+        for category in next_categories:
+            next_categories_dict[category['category'] + category['subcategory']] = category['id']
+        for product in next_product:
+            if next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper()):
+                product['category_id'] = next_categories_dict.get(
+                    product['section_name'].upper() + product['category_name'].upper())
+        with open('next_updated.json', "w", encoding='utf-8') as file:
+            json.dump(next_product, file, indent=4, ensure_ascii=False)
 
     def __call__(self, url, *args, **kwargs):
         soup = self.making_soup_txt(url)
@@ -181,21 +193,7 @@ class Parser:
         self._section_links = sections
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         asyncio.run(self.main())
-
-
-def make_next_json_with_category_id():
-    with open('next.json', 'r', encoding='utf-8') as file:
-        next_product = json.load(file)
-    with open('next_categories_redacted.json', 'r', encoding='utf-8') as file:
-        next_categories = json.load(file)
-    next_categories_dict = {}
-    for category in next_categories:
-        next_categories_dict[category['category'] + category['subcategory']] = category['id']
-    for product in next_product:
-        if next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper()):
-            product['category_id'] = next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper())
-    with open('next_updated.json', "w", encoding='utf-8') as file:
-        json.dump(next_product, file, indent=4, ensure_ascii=False)
+        self.make_next_json_with_category_id()
 
 
 def find_new_ids(obj):
@@ -278,10 +276,10 @@ if __name__ == '__main__':
     db_url = 'postgresql://postgres:jisJH7i2ddKod3ItAfj5@containers-us-west-91.railway.app:5522/railway'
     parse_site = Parser()
     parse_site('https://www.nextdirect.com/kz/ru')
-    make_next_json_with_category_id()
     new_items = find_new_ids(parse_site)
     if new_items:
         print('Появились новые вещи')
         print('Количество:', len(new_items))
+        print(new_items)
         insert_new_products(new_items)
     update_items(parse_site)
