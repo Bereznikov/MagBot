@@ -13,3 +13,5 @@
 /TelegramBot/inlinekeyboard.py
 /TelegramBot/nestedconversation.py
 /Parsing/zara_products_update_category.json
+/Parsing/next_id.txt
+/Parsing/next_idset.txt

@@ -146,6 +146,7 @@ def get_product(zara_categories, db_products_ids):
 
 
 def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
+
                               unique_product_ids):
     category_info = requests.get(url=url, headers=make_headers()).json()
     elements = category_info['productGroups'][0]['elements']
