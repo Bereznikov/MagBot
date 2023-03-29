@@ -220,18 +220,21 @@ def update_items(obj):
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = true""")
             query_result = cur.fetchall()
+            print('Более не доступны:')
             for item_id in query_result:
                 if item_id[0] not in set_id:
                     cur.execute(f"UPDATE product SET availability = false WHERE product_id = '{item_id[0]}'")
                     counter += 1
-                    print(item_id[0], end=':')
+                    print(item_id[0], end=' ')
+            print()
+            print("Снова доступны:")
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = false""")
             query_result = cur.fetchall()
             for item_id in query_result:
                 if item_id[0] in set_id:
                     cur.execute(f"UPDATE product SET availability = true WHERE product_id = '{item_id[0]}'")
                     counter += 1
-                    print(item_id[0], end=';')
+                    print(item_id[0], end=' ')
     print()
     print('Обновлен статус продуктов:', counter)
 
@@ -239,6 +242,7 @@ def update_items(obj):
 def insert_new_products(new_ids):
     with open('next_updated.json', "r", encoding='utf-8') as file:
         products = json.load(file)
+    no_category_list = []
     products_list = []
     new_products = []
     for i in new_ids:
@@ -261,6 +265,8 @@ def insert_new_products(new_ids):
         if product_id not in ids_set and category:
             ids_set.add(product_id)
             products_list.append(_tmp_tuple)
+        elif not category:
+            no_category_list.append((product_id, product['section_name'], product['category_name']))
         else:
             print(product_id, category)
     with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
@@ -270,6 +276,9 @@ def insert_new_products(new_ids):
             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
             psycopg2.extras.execute_batch(cur, insert_query, products_list)
             print('Добавлено новых продуктов:', len(products_list))
+    if no_category_list:
+        print('Появились вещи новой категории:')
+        print(*no_category_list)
 
 
 if __name__ == '__main__':
@@ -278,8 +287,7 @@ if __name__ == '__main__':
     parse_site('https://www.nextdirect.com/kz/ru')
     new_items = find_new_ids(parse_site)
     if new_items:
-        print('Появились новые вещи')
-        print('Количество:', len(new_items))
+        print('Появились новые вещи, в количестве:', len(new_items))
         print(new_items)
         insert_new_products(new_items)
     update_items(parse_site)
