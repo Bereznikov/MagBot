@@ -1,7 +1,6 @@
 import logging
 import psycopg2
 import psycopg2.extras
-import random
 import traceback
 import html
 import json
@@ -9,7 +8,6 @@ from customer import Customer
 from db_connection import PostgresConnection
 from key import key
 from datetime import datetime, timezone
-from db_password import host, password_railway
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, \
@@ -44,13 +42,14 @@ async def restart(update, context):
     user = update.effective_user
     context.user_data[user.id].connection.strong_check()
     reply_keyboard = [["Zara", "Next"]]
+    logger.info('%s сделал restart бота', user.first_name)
     await update.message.reply_text(
         f"Из какого магазина хотите заказать одежду?",
         reply_markup=ReplyKeyboardMarkup(keyboard=reply_keyboard, resize_keyboard=True))
     return SHOP
 
 
-async def shop_name(update, context):
+async def section_name(update, context):
     user = update.message.from_user
     logger.info("%s выбрал магазин %s", user.first_name, update.message.text)
     context.user_data[user.id].shop = update.message.text
@@ -64,11 +63,11 @@ async def shop_name(update, context):
     return SECTION
 
 
-async def you_silly(update, context):
+async def fake_shop(update, context):
     user = update.message.from_user
     logger.info("%s попался на тетю Глашу, вот лошара", user.first_name)
     await update.message.reply_text(
-        f"Ну сколько можно тыкать на тетю Глашу, {user.first_name}? Ты точно нужным делом занимаешься?... \n",
+        f"Ого, как ты здесь оказался, {user.first_name}? Ты точно нужным делом занимаешься?... \n",
         reply_markup=ReplyKeyboardMarkup(
             [['Выбрать заново']], resize_keyboard=True))
     return SELECTION
@@ -90,10 +89,9 @@ async def category_name(update, context):
         GROUP BY category_name
         ORDER BY COUNT(*) DESC"""
         cur.execute(popular_categories_query, (store_name, section_name))
-        _tmp = cur.fetchall()
-        cur.close()
-        _popular_categories = [a[0].capitalize() for a in _tmp[:30]]
-        popular_categories = [_popular_categories[2 * i: 2 * i + 2] for i in range((len(_popular_categories) + 1) // 2)]
+        all_categories = cur.fetchall()
+        flat_categories = [a[0].capitalize() for a in all_categories[:30]]
+        popular_categories = [flat_categories[2 * i: 2 * i + 2] for i in range((len(flat_categories) + 1) // 2)]
         await update.message.reply_text(
             'Хорошо, а из какой категории товаров?',
             reply_markup=ReplyKeyboardMarkup(
@@ -102,51 +100,22 @@ async def category_name(update, context):
     return CATEGORY
 
 
-async def woman_dress(update, context):
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
-        conn.autocommit = True
-        with conn.cursor() as cur:
-            count_query = "SELECT COUNT(*) FROM product WHERE category_id = '2187655'"
-            cur.execute(count_query)
-            number_of_products = cur.fetchone()[0]
-            rand_dress = random.randint(1, number_of_products)
-            select_query = """ 
-            SELECT product_link, image_link, product_name,price
-            FROM product
-            WHERE category_id = '2187655'
-            LIMIT 1 OFFSET (%s)"""
-            cur.execute(select_query, (rand_dress,))
-            records = cur.fetchall()
-            for rand_int in range(0, 1):
-                product_link = records[rand_int][0]
-                image_link = records[rand_int][1]
-                product_name = records[rand_int][2]
-                price = records[rand_int][3]
-                print(product_link, image_link)
-            await update.message.reply_markdown_v2(text=f"[l]({image_link})"
-                                                        f" [{product_name.replace('-', ' ').replace('.', ' ')} "
-                                                        f"{price} тг]({product_link})")
-
-
 async def show_product(update, context):
     user = update.message.from_user
     customer = context.user_data[user.id]
     if update.message.text not in ('➡', '⬅'):
-        context.user_data[user.id].category = update.message.text.upper()
-        context.user_data[user.id].number = 0
-        context.user_data[user.id].products_from_category = []
-        await show_product_sql_products(context, user)
-        customer = context.user_data[user.id]
-
+        customer.category = update.message.text.upper()
+        customer.number = 0
+        customer.products_from_category = []
+        await show_product_sql_products(customer)
     elif update.message.text == '➡':
         if customer.number + 2 >= len(customer.products_from_category):
-            await show_product_sql_products(context, user)
+            await show_product_sql_products(customer)
         customer.number = min(customer.number + 1, customer.number_of_products - 1)
     elif update.message.text == '⬅':
         customer.number = max(customer.number - 1, 0)
 
-    reply_keyboard = await show_product_keyboard(context.user_data[user.id])
+    reply_keyboard = await show_product_keyboard(customer)
 
     number = customer.number
     if customer.products_from_category is None or number >= len(customer.products_from_category):
@@ -155,34 +124,34 @@ async def show_product(update, context):
         return SELECTION
 
     image_link = customer.products_from_category[number]['image_link']
-    product_name = customer.products_from_category[number]['product_name']
+    product_name = customer.products_from_category[number]['product_name'].capitalize()
     price = customer.products_from_category[number]['price']
     product_link = customer.products_from_category[number]['product_link']
     product_id = customer.products_from_category[number]['product_id']
-    product_name = product_name.capitalize()
     logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
     product_name = product_name.replace('-', "\-").replace('.', '\.')
-    await update.message.reply_photo(image_link,
-                                     caption=f"{product_name}\n"
-                                             f"Цена: {price} Тенге\n"
-                                             f"[Ссылка на товар]({product_link})",
-                                     parse_mode='MarkdownV2',
-                                     reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True),
-                                     )
+    caption = f"{product_name}\n" \
+              f"Цена: {price} Тенге\n" \
+              f"[Ссылка на товар]({product_link})"
+    await update.message.reply_photo(
+        image_link,
+        caption=caption,
+        parse_mode='MarkdownV2',
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True),
+    )
     return SELECTION
 
 
-async def show_product_sql_products(context, user):
-    customer = context.user_data[user.id]
+async def show_product_sql_products(customer):
     customer.connection.strong_check()
     with customer.connection.connection.cursor() as cur:
-        select_query = \
-            """SELECT product_link, image_link, product_name, price, product_id
-            FROM product_full_info
-            WHERE shop_name = %s AND section_name = %s AND category_name = %s AND availability = true
-            ORDER BY product_id DESC
-            LIMIT 10
-            OFFSET %s"""
+        select_query = """
+        SELECT product_link, image_link, product_name, price, product_id
+        FROM product_full_info
+        WHERE shop_name = %s AND section_name = %s AND category_name = %s AND availability = true
+        ORDER BY product_id DESC
+        LIMIT 10
+        OFFSET %s"""
         cur.execute(select_query,
                     (customer.shop, customer.section,
                      customer.category, len(customer.products_from_category)))
@@ -196,8 +165,7 @@ async def show_product_sql_products(context, user):
                 'image_link': image_link,
                 'product_link': product_link
             })
-        customer.number_of_products = len(context.user_data[user.id].products_from_category)
-        context.user_data[user.id] = customer
+        customer.number_of_products = len(customer.products_from_category)
 
 
 async def show_product_keyboard(customer):
@@ -265,7 +233,7 @@ async def add_product(update, context):
 
     for i, product in enumerate(customer.cart):
         if product['product_id'] == product_id:
-            if update.message.text == '➖':
+            if update.message.text == '🔻':
                 customer.cart[i]['quantity'] -= 1
                 if customer.cart[i]['quantity'] <= 0:
                     customer.cart.pop(i)
@@ -490,9 +458,8 @@ if __name__ == '__main__':
         states={
             RESTART: [CommandHandler('restart', restart)],
             SHOP: [
-                # CallbackQueryHandler(shop_name, pattern="^(Zara|Next)$"),
-                MessageHandler(filters.Regex("^(Zara|Next)$"), shop_name),
-                MessageHandler(filters.Regex("^От тети Глаши$"), you_silly)],
+                MessageHandler(filters.Regex("^(Zara|Next)$"), section_name),
+                MessageHandler(filters.Regex("^От тети Глаши$"), fake_shop)],
 
             SECTION: [
                 MessageHandler(filters.Regex(

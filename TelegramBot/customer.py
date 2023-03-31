@@ -33,7 +33,7 @@ class Customer:
         self.shop = shop
         self.section = section
         self.category = category
-        self.nuber = number
+        self.number = number
         self.cart = cart
         self.number_of_products = number_of_products
         self.products_from_category = products_from_category
