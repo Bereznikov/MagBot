@@ -81,14 +81,14 @@ async def category_name(update, context):
     context.user_data[user.id].connection.strong_check()
     with context.user_data[user.id].connection.connection.cursor() as cur:
         store_name = context.user_data[user.id].shop
-        section_name = context.user_data[user.id].section
+        sections_name = context.user_data[user.id].section
         popular_categories_query = """
         SELECT category_name
         FROM product_full_info
         WHERE shop_name = %s AND section_name = %s AND availability = true
         GROUP BY category_name
         ORDER BY COUNT(*) DESC"""
-        cur.execute(popular_categories_query, (store_name, section_name))
+        cur.execute(popular_categories_query, (store_name, sections_name))
         all_categories = cur.fetchall()
         flat_categories = [a[0].capitalize() for a in all_categories[:30]]
         popular_categories = [flat_categories[2 * i: 2 * i + 2] for i in range((len(flat_categories) + 1) // 2)]
@@ -107,29 +107,24 @@ async def show_product(update, context):
         customer.category = update.message.text.upper()
         customer.number = 0
         customer.products_from_category = []
-        await show_product_sql_products(customer)
+        await _show_product_sql(customer)
     elif update.message.text == '➡':
         if customer.number + 2 >= len(customer.products_from_category):
-            await show_product_sql_products(customer)
+            await _show_product_sql(customer)
         customer.number = min(customer.number + 1, customer.number_of_products - 1)
     elif update.message.text == '⬅':
         customer.number = max(customer.number - 1, 0)
 
-    reply_keyboard = await show_product_keyboard(customer)
+    reply_keyboard = await _show_product_keyboard(customer)
 
     number = customer.number
     if customer.products_from_category is None or number >= len(customer.products_from_category):
         logger.exception("%s customer.products_from_category is None %s, %s", user.first_name, number,
                          customer.products_from_category)
         return SELECTION
-
-    image_link = customer.products_from_category[number]['image_link']
-    product_name = customer.products_from_category[number]['product_name'].capitalize()
-    price = customer.products_from_category[number]['price']
-    product_link = customer.products_from_category[number]['product_link']
-    product_id = customer.products_from_category[number]['product_id']
+    image_link, price, product_id, product_link, product_name = await _info_product_from_category(customer, number)
     logger.info("%s рассматривает %s c id %s", user.first_name, product_name, product_id)
-    product_name = product_name.replace('-', "\-").replace('.', '\.')
+    product_name = _to_markdown_v2(product_name)
     caption = f"{product_name}\n" \
               f"Цена: {price} Тенге\n" \
               f"[Ссылка на товар]({product_link})"
@@ -142,19 +137,22 @@ async def show_product(update, context):
     return SELECTION
 
 
-async def show_product_sql_products(customer):
+def _to_markdown_v2(text):
+    return text.replace("-", "\-").replace(".", "\.").replace('!', '\!')
+
+
+async def _show_product_sql(customer):
     customer.connection.strong_check()
     with customer.connection.connection.cursor() as cur:
-        select_query = """
+        select_products_query = """
         SELECT product_link, image_link, product_name, price, product_id
         FROM product_full_info
         WHERE shop_name = %s AND section_name = %s AND category_name = %s AND availability = true
         ORDER BY product_id DESC
         LIMIT 10
         OFFSET %s"""
-        cur.execute(select_query,
-                    (customer.shop, customer.section,
-                     customer.category, len(customer.products_from_category)))
+        cur.execute(select_products_query,
+                    (customer.shop, customer.section, customer.category, len(customer.products_from_category)))
         records = cur.fetchall()
         for number, record in enumerate(records):
             product_link, image_link, product_name, price, product_id = record
@@ -168,7 +166,7 @@ async def show_product_sql_products(customer):
         customer.number_of_products = len(customer.products_from_category)
 
 
-async def show_product_keyboard(customer):
+async def _show_product_keyboard(customer):
     reply_keyboard = [[],
                       ['Добавить в корзину'],
                       ['Выбрать заново']]
@@ -185,34 +183,40 @@ async def show_product_keyboard(customer):
     return reply_keyboard
 
 
-async def show_product_query(update, context):
+async def show_product_after_query(update, context):
     user = update.callback_query.from_user
-    context.user_data[user.id].curret_product_id = None
     customer = context.user_data[user.id]
-    reply_keyboard = await show_product_keyboard(customer)
+    reply_keyboard = await _show_product_keyboard(customer)
     number = customer.number
     if customer.products_from_category is None or number >= len(customer.products_from_category):
         logger.exception("%s customer.products_from_category is None", user.first_name)
         return SELECTION
+    image_link, price, product_id, product_link, product_name = await _info_product_from_category(customer, number)
+
+    logger.info("%s Вышел из корзины и рассматривает %s c id %s", user.first_name, product_name, product_id)
+
+    product_name = _to_markdown_v2(product_name)
+    caption = f"{product_name}\n" \
+              f"Цена: {price} Тенге\n" \
+              f"[Ссылка на товар]({product_link})"
+
+    await update.callback_query.message.reply_photo(
+        image_link,
+        caption=caption,
+        parse_mode='MarkdownV2',
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True),
+    )
+    return SELECTION
+
+
+async def _info_product_from_category(customer, number):
     image_link = customer.products_from_category[number]['image_link']
-    product_name = customer.products_from_category[number]['product_name']
+    product_name = customer.products_from_category[number]['product_name'].capitalize()
     price = customer.products_from_category[number]['price']
     product_link = customer.products_from_category[number]['product_link']
     product_id = customer.products_from_category[number]['product_id']
     product_name = product_name.capitalize()
-
-    logger.info("%s Вышел из корзины и рассматривает %s c id %s", user.first_name, product_name, product_id)
-
-    product_name = product_name.replace('-', '\-').replace('.', '\.')
-    await update.callback_query.message.reply_photo(image_link,
-                                                    caption=f"{product_name}\n"
-                                                            f"Цена: {price} Тенге\n"
-                                                            f"[Ссылка на товар]({product_link})",
-                                                    parse_mode='MarkdownV2',
-                                                    reply_markup=ReplyKeyboardMarkup(reply_keyboard,
-                                                                                     resize_keyboard=True),
-                                                    )
-    return SELECTION
+    return image_link, price, product_id, product_link, product_name
 
 
 async def add_product(update, context):
@@ -225,11 +229,8 @@ async def add_product(update, context):
     product_link = customer.products_from_category[number]['product_link']
     image_link = customer.products_from_category[number]['image_link']
 
-    logger.info("%s добавил в корзину %s c id %s", user.first_name, product_name, product_id)
-    if not customer.cart:
+    if customer.cart is None:
         customer.cart = []
-
-    deleted_from_cart = False
 
     for i, product in enumerate(customer.cart):
         if product['product_id'] == product_id:
@@ -237,13 +238,10 @@ async def add_product(update, context):
                 customer.cart[i]['quantity'] -= 1
                 if customer.cart[i]['quantity'] <= 0:
                     customer.cart.pop(i)
-                    deleted_from_cart = True
             else:
                 customer.cart[i]['quantity'] += 1
-            product_num = i
             break
     else:
-        product_num = len(customer.cart)
         customer.cart.append({
             'product_id': product_id,
             'name': product_name,
@@ -251,25 +249,17 @@ async def add_product(update, context):
             'link': product_link,
             'image_link': image_link,
             'price': price})
-
-    reply_keyboard = await add_product_keyboard(customer, deleted_from_cart, product_num)
-    await update.message.reply_text(f'Вы добавили {product_name} в корзину',
-                                    reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True))
-
-
-async def add_product_keyboard(customer, deleted_from_cart, product_num):
-    reply_keyboard = [[],
-                      ['Добавить в корзину'],
-                      ['Выбрать заново']]
-    if customer.number > 0:
-        reply_keyboard[0].append('⬅')
-    if customer.number + 1 < customer.number_of_products:
-        reply_keyboard[0].append('➡')
-    if not deleted_from_cart and customer.cart[product_num]['quantity'] > 0:
-        reply_keyboard[1] = ['🔻', f"{customer.cart[product_num]['quantity']}", '🔺']
-    if customer.cart:
-        reply_keyboard[-1].insert(0, 'Корзина')
-    return reply_keyboard
+    if update.message.text != '🔻':
+        logger.info("%s добавил в корзину %s c id %s", user.first_name, product_name, product_id)
+        message = f'Вы добавили {product_name} в корзину'
+    else:
+        logger.info("%s убрал из корзины %s c id %s", user.first_name, product_name, product_id)
+        message = f'Вы убрали {product_name} из корзины'
+    reply_keyboard = await _show_product_keyboard(customer)
+    await update.message.reply_text(
+        text=message,
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True)
+    )
 
 
 async def address(update, context):
@@ -279,7 +269,10 @@ async def address(update, context):
     reply_markup = ReplyKeyboardRemove()
     if customer.address:
         reply_markup = ReplyKeyboardMarkup([[customer.address]], resize_keyboard=True)
-    await update.callback_query.message.reply_text('Напишите адрес доставки', reply_markup=reply_markup)
+    await update.callback_query.message.reply_text(
+        'Напишите адрес доставки',
+        reply_markup=reply_markup
+    )
     return ADDRESS
 
 
@@ -288,8 +281,10 @@ async def shipper(update, context):
     context.user_data[user.id].address = update.message.text
     customer = context.user_data[user.id]
     logger.info("%s продолжил оформлять заказ. Корзина: %s", customer.first_name, customer.cart)
-    await update.message.reply_text('Выберите фирму доставки',
-                                    reply_markup=ReplyKeyboardMarkup([['СДЭК', 'Почта России']], resize_keyboard=True))
+    reply_keyboard = [['СДЭК', 'Почта России']]
+    await update.message.reply_text(
+        'Выберите фирму доставки',
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True))
     return CHECKOUT
 
 
@@ -369,58 +364,59 @@ async def show_cart_keyboard(customer):
 
 async def checkout(update, context):
     user = update.message.from_user
-    context.user_data[user.id].shipper = update.message.text
     customer = context.user_data[user.id]
+    customer.shipper = update.message.text
     cart_messages = []
     total_price = 0
     for product in customer.cart:
         total_price += product["price"] * product["quantity"]
-        product_name = product["name"].capitalize().replace("-", "\-").replace(".", "\.").replace('!', '\!')
+        product_name = _to_markdown_v2(product["name"])
         cart_messages.append(
             f'{product_name}\n'
             f'Цена: {product["price"]} Тенге\n'
             f'Количество: {product["quantity"]}\n'
             f'[Ссылка на товар]({product["link"]})')
     cart_messages = '\n\n'.join(cart_messages)
-    message = f"Ваш заказ оформлен\!" \
+    message = f"{_to_markdown_v2('Ваш заказ оформлен!')}" \
               f"\nОбщая стоимость: {total_price} Тенге\n\n{cart_messages}"
 
-    context.user_data[user.id].connection.strong_check()
-    with context.user_data[user.id].connection.connection.cursor() as cur:
-        try:
-            select_user_query = """SELECT customer_id FROM customer"""
-            cur.execute(select_user_query)
-            users = [user[0] for user in cur.fetchall()]
-            if customer.id not in users:
-                insert_user_query = """INSERT INTO customer (customer_id, first_name, last_name, username)
-                                VALUES (%s, %s, %s, %s)"""
-                cur.execute(insert_user_query,
-                            (user.id, user.first_name, user.last_name, user.username,))
+    customer.connection.strong_check()
+    with customer.connection.connection.cursor() as cur:
+        select_user_query = """SELECT customer_id FROM customer"""
+        cur.execute(select_user_query)
+        users = [user[0] for user in cur.fetchall()]
+        if customer.id not in users:
+            insert_user_query = """
+            INSERT INTO customer (customer_id, first_name, last_name, username)
+            VALUES (%s, %s, %s, %s)
+            """
+            cur.execute(insert_user_query,
+                        (user.id, user.first_name, user.last_name, user.username,))
 
-            insert_order_query = """INSERT INTO orders (customer_id, order_time, ship_adress, status_id, shipper_id)
-             VALUES (%s, %s, %s, %s, %s)"""
-            date_time_now = datetime.now(timezone.utc)
+        insert_order_query = """
+        INSERT INTO orders (customer_id, order_time, ship_adress, status_id, shipper_id)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        date_time_now = datetime.now(timezone.utc)
 
-            shipper_id = 1
-            if customer.shipper == 'Почта России':
-                shipper_id = 2
-            cur.execute(insert_order_query, (customer.id, date_time_now, customer.address, 1, shipper_id,))
-            select_order_id_query = """SELECT MAX(order_id) FROM orders"""
-            cur.execute(select_order_id_query)
-            order_id = cur.fetchone()[0]
-            order_detail = []
-            for product in customer.cart:
-                order_detail.append((product['product_id'], order_id, product["quantity"]))
-            insert_order_detail_query = """INSERT INTO order_detail (product_id, order_id, quantity)
+        shipper_id = 1
+        if customer.shipper == 'Почта России':
+            shipper_id = 2
+        cur.execute(insert_order_query, (customer.id, date_time_now, customer.address, 1, shipper_id,))
+        select_order_id_query = """SELECT MAX(order_id) FROM orders"""
+        cur.execute(select_order_id_query)
+        order_id = cur.fetchone()[0]
+        order_detail = []
+        for product in customer.cart:
+            order_detail.append((product['product_id'], order_id, product["quantity"]))
+        insert_order_detail_query = """INSERT INTO order_detail (product_id, order_id, quantity)
              VALUES (%s, %s, %s)"""
-            psycopg2.extras.execute_batch(cur, insert_order_detail_query, order_detail)
-            logger.info("%s оформил заказ. Корзина: %s", customer.first_name, customer.cart)
-            context.user_data[user.id].cart = None
-            await update.message.reply_markdown_v2(message,
-                                                   reply_markup=ReplyKeyboardMarkup([['Выбрать заново']],
-                                                                                    resize_keyboard=True))
-        except Exception as ex:
-            logger.exception(ex)
+        psycopg2.extras.execute_batch(cur, insert_order_detail_query, order_detail)
+        logger.info("%s оформил заказ. Корзина: %s", customer.first_name, customer.cart)
+        context.user_data[user.id].cart = None
+        await update.message.reply_markdown_v2(
+            text=message,
+            reply_markup=ReplyKeyboardMarkup([['Выбрать заново']], resize_keyboard=True))
 
     return SELECTION
 
@@ -440,8 +436,8 @@ async def error_handler(update, context):
         f"<pre>{html.escape(tb_string)}</pre>"
     )
 
-    # logger.error(msg=message)
-    await context.bot.send_message(chat_id=106683136, text=message, parse_mode="HTML")
+    logger.error(msg=message)
+    # await context.bot.send_message(chat_id=106683136, text=message, parse_mode="HTML")
 
 
 if __name__ == '__main__':
@@ -474,7 +470,7 @@ if __name__ == '__main__':
                         MessageHandler(filters.Regex("^(Выбрать заново|)$"), restart),
                         MessageHandler(filters.Regex('/^([^0-9]*)$/'), show_product)],
             CART: [CallbackQueryHandler(show_cart_query, pattern="^(Num|Nothing|Cart)"),
-                   CallbackQueryHandler(show_product_query, pattern="^Menu$"),
+                   CallbackQueryHandler(show_product_after_query, pattern="^Menu$"),
                    CallbackQueryHandler(address, pattern="^Order$")],
             ADDRESS: [MessageHandler(filters.TEXT, shipper)],
             CHECKOUT: [MessageHandler(filters.Regex("^(СДЭК|Почта России)$"), checkout)]
