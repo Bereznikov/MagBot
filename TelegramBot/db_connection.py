@@ -1,6 +1,5 @@
 import psycopg2
 from db_password import host, password_railway
-import logging
 
 
 class PostgresConnection:
@@ -9,7 +8,6 @@ class PostgresConnection:
                                       password=password_railway)
         connection.autocommit = True
         self.connection = connection
-        self.logger = logging.getLogger()
 
     def strong_check(self):
         try:
@@ -17,7 +15,7 @@ class PostgresConnection:
             cur.execute('SELECT 1')
             cur.close()
         except psycopg2.OperationalError as ex:
-            self.logger.error(ex.__class__, 'Connection was lost and updated')
+            print(ex.__class__, 'Connection was lost and updated')
             self.update()
 
     def simple_check(self):
