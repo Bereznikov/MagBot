@@ -319,19 +319,15 @@ async def show_cart_query(update, context):
         if customer.cart[customer.cart_position]['quantity'] == 0:
             customer.cart.pop(customer.cart_position)
             customer.cart_position = 0
-            if len(customer.cart) == 0:
-                await update.callback_query.message.reply_text('Корзина пуста, начнем заново? /restart')
-                return RESTART
-    if query in ('Cart<', 'Cart>'):
-        logger.info("%s перелистыват корзину. Корзина: %s", customer.first_name, customer.cart)
-    elif query in ('Num-', 'Num+'):
-        logger.info("%s изменил количество товара в корзине. Корзина: %s", customer.first_name, customer.cart)
-    else:
-        logger.info("%s что-то делает в корзине. Корзина: %s", customer.first_name, customer.cart)
+        if len(customer.cart) == 0:
+            await update.callback_query.message.reply_text('Корзина пуста, начнем заново? /restart')
+            return RESTART
+    await _logger_show_cart(customer, query)
     reply_keyboard = await _show_cart_keyboard(customer)
     product = context.user_data[user.id].cart[customer.cart_position]
     cart_messages = (
-        f'{product["name"].capitalize()} \nЦена: {product["price"]}\n')
+        f'{product["name"].capitalize()} \nЦена: {product["price"]}\n'
+    )
     await update.callback_query.edit_message_media(
         InputMediaPhoto(context.user_data[user.id].cart[customer.cart_position]["image_link"]),
         reply_markup=InlineKeyboardMarkup(reply_keyboard))
@@ -341,6 +337,15 @@ async def show_cart_query(update, context):
         reply_markup=InlineKeyboardMarkup(reply_keyboard))
 
     return CART
+
+
+async def _logger_show_cart(customer, query):
+    if query in ('Cart<', 'Cart>'):
+        logger.info("%s перелистыват корзину. Корзина: %s", customer.first_name, customer.cart)
+    elif query in ('Num-', 'Num+'):
+        logger.info("%s изменил количество товара в корзине. Корзина: %s", customer.first_name, customer.cart)
+    else:
+        logger.info("%s что-то делает в корзине. Корзина: %s", customer.first_name, customer.cart)
 
 
 async def _show_cart_keyboard(customer):
