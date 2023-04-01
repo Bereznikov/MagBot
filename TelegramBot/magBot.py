@@ -1,15 +1,16 @@
 import logging
 import psycopg2
 import psycopg2.extras
-import traceback
-import html
-import json
+# import traceback
+# import html
+# import json
 from customer import Customer
 from db_connection import PostgresConnection
 from key import key
 from datetime import datetime, timezone
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InputMediaPhoto
+# Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, \
     CallbackQueryHandler
 
@@ -40,7 +41,8 @@ async def start(update, context):
 
 async def restart(update, context):
     user = update.effective_user
-    context.user_data[user.id].connection.strong_check()
+    customer = context.user_data[user.id]
+    await _db_check_with_logging(customer)
     reply_keyboard = [["Zara", "Next"]]
     logger.info('%s сделал restart бота', user.first_name)
     await update.message.reply_text(
@@ -75,11 +77,12 @@ async def fake_shop(update, context):
 
 async def category_name(update, context):
     user = update.message.from_user
-    context.user_data[user.id].section = update.message.text[:-2]
+    customer = context.user_data[user.id]
+    customer.section = update.message.text[:-2]
 
     logger.info("%s выбрал секцию: %s", user.first_name, update.message.text[:-2])
-    context.user_data[user.id].connection.strong_check()
-    with context.user_data[user.id].connection.connection.cursor() as cur:
+    await _db_check_with_logging(customer)
+    with customer.connection.connection.cursor() as cur:
         store_name = context.user_data[user.id].shop
         sections_name = context.user_data[user.id].section
         popular_categories_query = """
@@ -98,6 +101,12 @@ async def category_name(update, context):
                 popular_categories, resize_keyboard=True))
 
     return CATEGORY
+
+
+async def _db_check_with_logging(customer):
+    is_connection_updated = customer.connection.strong_check()
+    if is_connection_updated:
+        logger.info('у пользователя %s обновилось соединение с БД', customer.first_name)
 
 
 async def show_product(update, context):
@@ -142,7 +151,7 @@ def _to_markdown_v2(text):
 
 
 async def _show_product_sql(customer):
-    customer.connection.strong_check()
+    await _db_check_with_logging(customer)
     with customer.connection.connection.cursor() as cur:
         select_products_query = """
         SELECT product_link, image_link, product_name, price, product_id
@@ -387,7 +396,7 @@ async def checkout(update, context):
               f"\nОбщая стоимость: {total_price} Тенге\n\n" \
               f"{cart_messages}"
 
-    customer.connection.strong_check()
+    await _db_check_with_logging(customer)
     with customer.connection.connection.cursor() as cur:
         select_user_query = """SELECT customer_id FROM customer"""
         cur.execute(select_user_query)
@@ -431,19 +440,19 @@ async def checkout(update, context):
 
 async def error_handler(update, context):
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
-    tb_string = "".join(tb_list)
-
-    update_str = update.to_dict() if isinstance(update, Update) else str(update)
-    message = (
-        f"An exception was raised while handling an update\n"
-        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
-        "</pre>\n\n"
-        f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
-        f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
-        f"<pre>{html.escape(tb_string)}</pre>"
-    )
-    logger.error(msg=message)
+    # tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    # tb_string = "".join(tb_list)
+    #
+    # update_str = update.to_dict() if isinstance(update, Update) else str(update)
+    # message = (
+    #     f"An exception was raised while handling an update\n"
+    #     f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+    #     "</pre>\n\n"
+    #     f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
+    #     f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
+    #     f"<pre>{html.escape(tb_string)}</pre>"
+    # )
+    # logger.error(msg=message)
     # await context.bot.send_message(chat_id=106683136, text=message, parse_mode="HTML")
 
 
@@ -464,13 +473,10 @@ if __name__ == '__main__':
             SHOP: [
                 MessageHandler(filters.Regex("^(Zara|Next)$"), section_name),
                 MessageHandler(filters.Regex("^От тети Глаши$"), fake_shop)],
-
             SECTION: [
                 MessageHandler(filters.Regex(
                     "^(Мужчины|Женщины|Девочки|Мальчики|Малыши|Для дома)"), category_name)],
-
             CATEGORY: [MessageHandler(filters.TEXT, show_product)],
-
             SELECTION: [MessageHandler(filters.Regex("^Оформить заказ$"), address),
                         MessageHandler(filters.Regex("^Корзина$"), show_cart_message),
                         MessageHandler(filters.Regex("^(Добавить|🔻|🔺)"), add_product),

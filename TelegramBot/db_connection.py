@@ -14,9 +14,10 @@ class PostgresConnection:
             cur = self.connection.cursor()
             cur.execute('SELECT 1')
             cur.close()
+            return False
         except psycopg2.OperationalError as ex:
-            print(ex.__class__, 'Connection was lost and updated')
             self.update()
+            return True
 
     def simple_check(self):
         if self.connection.closed != 0:
