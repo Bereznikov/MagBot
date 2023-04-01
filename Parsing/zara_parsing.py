@@ -37,7 +37,7 @@ def categories_ids_from_db(conn):
         return categories
 
 
-def new_categories(zara_categories):
+def _new_categories(zara_categories):
     new_categories_list = []
     for category in zara_categories:
         if category['is_new']:
@@ -48,11 +48,38 @@ def new_categories(zara_categories):
     return new_categories_list
 
 
-def insert_categories(conn, categories):
+def insert_new_categories(conn, categories):
     conn.strong_check()
     with conn.connection.cursor() as cur:
         insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
         psycopg2.extras.execute_batch(cur, insert_query, categories)
+
+
+def make_categories_links(url, db_categories):
+    full_categories_links = requests.get(url=url, headers=make_headers()).json()
+    zara_categories_full = full_categories_links['categories']
+    zara_categories = []
+    unique_category_ids = set()
+
+    for category in zara_categories_full:
+        if category['name'] != 'ДЕТИ':
+            check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
+    children_category = zara_categories_full[2]['subcategories']
+    for category in children_category:
+        check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
+    return clean_categories_links(zara_categories)
+
+
+def clean_categories_links(zara_categories):
+    clean_categories = []
+    for i, category in enumerate(zara_categories):
+        print(f'[+] ЧИЩУ ЛИНКИ {i + 1}/{len(zara_categories)} {category["url"]}')
+        r = requests.get(category['url'], headers=make_headers())
+        if r.text == '{"productGroups":[]}':
+            continue
+        else:
+            clean_categories.append(category)
+    return clean_categories
 
 
 def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name, db_categories):
@@ -87,18 +114,6 @@ def add_to_categories_list(category, subcategory, zara_categories, unique_catego
         unique_category_ids.add(sub_category_ap)
 
 
-def clean_categories_links(zara_categories):
-    clean_categories = []
-    for i, category in enumerate(zara_categories):
-        print(f'[+] ЧИЩУ ЛИНКИ {i + 1}/{len(zara_categories)} {category["url"]}')
-        r = requests.get(category['url'], headers=make_headers())
-        if r.text == '{"productGroups":[]}':
-            continue
-        else:
-            clean_categories.append(category)
-    return clean_categories
-
-
 def check_all_subcategory(category, zara_categories, original, unique_ids, category_name, db_categories):
     for subcategory in category['subcategories']:
         tmp_subcategory = subcategory['name'].replace(' ', ' ')
@@ -106,21 +121,6 @@ def check_all_subcategory(category, zara_categories, original, unique_ids, categ
                                db_categories)
         check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}',
                               db_categories)
-
-
-def make_categories_links(url, db_categories):
-    full_categories_links = requests.get(url=url, headers=make_headers()).json()
-    zara_categories_full = full_categories_links['categories']
-    zara_categories = []
-    unique_category_ids = set()
-
-    for category in zara_categories_full:
-        if category['name'] != 'ДЕТИ':
-            check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-    children_category = zara_categories_full[2]['subcategories']
-    for category in children_category:
-        check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-    return clean_categories_links(zara_categories)
 
 
 def get_product(zara_categories, db_products_ids):
@@ -265,8 +265,8 @@ def main():
 
     zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',
                                             db_categories)
-    new_categories_list = new_categories(zara_categories)
-    insert_categories(pg_con, new_categories_list)
+    new_categories_list = _new_categories(zara_categories)
+    insert_new_categories(pg_con, new_categories_list)
     print('Заинсертил новые категории', len(new_categories_list))
 
     new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
