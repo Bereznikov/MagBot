@@ -30,12 +30,12 @@ async def handle_notifications(notification, bot):
     customer_id = order["customer_id"]
     order_id = order["order_id"]
     order_time = order['order_time']
-    ship_adress = order['ship_adress']
+    ship_address = order['ship_adress']
     order_time = f'Дата: {order_time[:10]} Время: {order_time[11:19]}'
     conn = await asyncpg.connect(database='railway', user='postgres', port=5522, host=host,
                                  password=password_railway)
     username = await conn.fetchval('SELECT username FROM customer WHERE customer_id = $1', customer_id)
-    await send_to_admin(username, order_id, order_time, ship_adress, bot)
+    await send_to_admin(username, order_id, order_time, ship_address, bot)
 
 
 async def main():

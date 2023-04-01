@@ -4,7 +4,6 @@ import os
 import json
 from db_password import password_railway, host
 from time import time
-from pprint import pprint
 
 
 def time_it(func):

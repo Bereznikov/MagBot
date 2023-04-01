@@ -1,7 +1,7 @@
 class Customer:
     def __init__(self, customer_id, first_name, last_name, username, phone=None, country=None, shop=None, section=None,
-                 category=None, number=1, cart=None, products_from_category=None, current_product_id=None,
-                 connection=None, address=None, shipper=None, cart_position=None, number_of_products=None):
+                 category=None, number=1, cart=None, products_from_category=None, connection=None,
+                 address=None, shipper=None, cart_position=None, number_of_products=None):
         self.id = customer_id
         self.first_name = first_name
         self.last_name = last_name
@@ -14,14 +14,13 @@ class Customer:
         self.category = category
         self.number = number
         self.cart = cart
+        self.cart_position = cart_position
         self.number_of_products = number_of_products
         self.products_from_category = products_from_category
         self.address = address
         self.shipper = shipper
 
         self.connection = connection
-
-        self.cart_position = cart_position
 
     def __str__(self):
         return f"{self.id} {self.username} {self.first_name} {self.last_name} {self.shop} {self.section} " \

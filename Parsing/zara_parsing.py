@@ -16,6 +16,7 @@ def dump_to_file(data, file_name):
 
 
 def product_ids_in_db(conn):
+    conn.strong_check()
     with conn.connection.cursor() as cur:
         select_query = 'SELECT product_id, category_id, availability FROM product WHERE shop_id=1'
         cur.execute(select_query)
@@ -27,6 +28,7 @@ def product_ids_in_db(conn):
 
 
 def categories_ids_in_db(conn):
+    conn.strong_check()
     with conn.connection.cursor() as cur:
         select_query = 'SELECT category_id FROM category'
         cur.execute(select_query)
@@ -146,7 +148,6 @@ def get_product(zara_categories, db_products_ids):
 
 
 def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
-
                               unique_product_ids):
     category_info = requests.get(url=url, headers=make_headers()).json()
     elements = category_info['productGroups'][0]['elements']
