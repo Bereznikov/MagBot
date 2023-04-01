@@ -1,3 +1,6 @@
+import asyncio
+import time
+import aiohttp
 import requests
 from fake_useragent import UserAgent
 from TelegramBot.db_connection import PostgresConnection
@@ -55,7 +58,7 @@ def insert_new_categories(conn, categories):
         psycopg2.extras.execute_batch(cur, insert_query, categories)
 
 
-def make_categories_links(url, db_categories):
+async def make_categories_links(url, db_categories):
     full_categories_links = requests.get(url=url, headers=make_headers()).json()
     zara_categories_full = full_categories_links['categories']
     zara_categories = []
@@ -67,18 +70,25 @@ def make_categories_links(url, db_categories):
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
         check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-    return clean_categories_links(zara_categories)
+    return await clean_categories_links(zara_categories)
 
 
-def clean_categories_links(zara_categories):
+async def get_html(url, category, clean_categories):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=make_headers()) as resp:
+            text = await resp.text()
+            if text != '{"productGroups":[]}':
+                clean_categories.append(category)
+
+
+async def clean_categories_links(zara_categories):
+    tasks = []
     clean_categories = []
-    for i, category in enumerate(zara_categories):
-        print(f'[+] ЧИЩУ ЛИНКИ {i + 1}/{len(zara_categories)} {category["url"]}')
-        r = requests.get(category['url'], headers=make_headers())
-        if r.text == '{"productGroups":[]}':
-            continue
-        else:
-            clean_categories.append(category)
+    for category in zara_categories:
+        task = asyncio.create_task(get_html(category['url'], category, clean_categories))
+        tasks.append(task)
+    await asyncio.gather(*tasks)
+    print(f"Почистил ссылки, было {len(zara_categories)}, стало {len(clean_categories)}")
     return clean_categories
 
 
@@ -123,19 +133,22 @@ def check_all_subcategory(category, zara_categories, original, unique_ids, categ
                               db_categories)
 
 
-def get_product(zara_categories, db_products_ids):
+async def get_product(zara_categories, db_products_ids):
+    tasks = []
     new_products_zara = []
     update_category_products = []
     unique_product_ids = {}
     availability_false_product_ids = set()
     availability_true_product_ids = set()
-    for i, category in enumerate(zara_categories):
-        print(f'[+] Обработка {i + 1}/{len(zara_categories)} {category["subcategory"]} {category["id"]}')
+    for category in zara_categories:
         id = category['id']
         url = category['url']
-        get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
-                                  unique_product_ids)
-
+        task = asyncio.create_task(
+            get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
+                                      unique_product_ids))
+        tasks.append(task)
+    await asyncio.gather(*tasks)
+    print(f'Обработал все категории')
     for product in db_products_ids:
         if (product not in unique_product_ids) and db_products_ids[product][1]:
             availability_false_product_ids.add(product)
@@ -146,9 +159,11 @@ def get_product(zara_categories, db_products_ids):
         availability_true_product_ids)
 
 
-def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
-                              unique_product_ids):
-    category_info = requests.get(url=url, headers=make_headers()).json()
+async def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
+                                    unique_product_ids):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=make_headers()) as resp:
+            category_info = await resp.json()
     elements = category_info['productGroups'][0]['elements']
     for el_num, elem in enumerate(elements):
         try:
@@ -180,13 +195,8 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
                 unique_product_ids[product_id] = id, availability
 
                 if product_id in db_products_ids and db_products_ids[product_id][0] != id:
-                    # print(f'Было product_id {product_id} category_id:{db_products_ids[product_id][0]},'
-                    #       f' новая категория {id}')
                     update_product_categories.append((id, product_id, availability))
-                    # unique_product_ids[product_id] = id
                     continue
-                # if product_id in db_products_ids and not availability:
-                #     continue
                 if product_id in db_products_ids:
                     continue
                 new_products_zara.append({
@@ -223,66 +233,91 @@ def insert_into_product(conn, new_products_zara):
         psycopg2.extras.execute_batch(cur, insert_query, products_list)
 
 
-def update_product_category(conn, update_category_products):
-    conn.strong_check()
-    with conn.connection.cursor() as cur:
-        for record in update_category_products:
-            cur.execute(""" UPDATE product SET category_id=%s, availability=%s WHERE product_id=%s""",
-                        (record[0], record[2], record[1],))
-            conn.connection.commit()
-        # cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
-        # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
-        # update_query = """ UPDATE product SET category_id=%s WHERE product_id=%s"""
-        # psycopg2.extras.execute_values(cur, update_query, update_category_products)
+# def update_product_category(conn, update_category_products):
+#     conn.strong_check()
+#     with conn.connection.cursor() as cur:
+#         for record in update_category_products:
+#             cur.execute(""" UPDATE product SET category_id=%s, availability=%s WHERE product_id=%s""",
+#                         (record[0], record[2], record[1],))
+#             conn.connection.commit()
+# cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
+# psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
+# update_query = """ UPDATE product SET category_id=%s WHERE product_id=%s"""
+# psycopg2.extras.execute_values(cur, update_query, update_category_products)
 
 
-def update_product_availability(conn, availability_false_product_ids):
+def update_product_availability_set_false(conn, availability_false_product_ids):
+    availability_false_product_ids = [(a,) for a in availability_false_product_ids]
     conn.strong_check()
     with conn.connection.cursor() as cur:
-        for id in availability_false_product_ids:
-            cur.execute(""" UPDATE product SET availability=false WHERE product_id=%s""", (id,))
-            conn.connection.commit()
+        # for id in availability_false_product_ids:
+        #     cur.execute(""" UPDATE product SET availability=false WHERE product_id=%s""", (id,))
+        #     conn.connection.commit()
         # cur.execute("PREPARE updateStmtAv AS UPDATE product SET availability=false WHERE product_id=$1")
         # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmtAv (%s)", availability_false_product_ids)
-        # update_query = """ UPDATE product SET availability=false WHERE product_id=%s"""
-        # psycopg2.extras.execute_values(cur, update_query, availability_false_product_ids)
+        update_query = """
+        UPDATE product SET availability=false
+        FROM (VALUES %s) AS update_payload (id)
+        WHERE product_id=update_payload.id"""
+        psycopg2.extras.execute_values(cur, update_query, availability_false_product_ids)
 
 
-def update_product_availability_true(conn, availability_true_product_ids):
+def update_product_availability_set_true(conn, availability_true_product_ids):
+    availability_true_product_ids = [(a,) for a in availability_true_product_ids]
     conn.strong_check()
     with conn.connection.cursor() as cur:
-        for id in availability_true_product_ids:
-            cur.execute(""" UPDATE product SET availability=true WHERE product_id=%s""", (id,))
-            conn.connection.commit()
+        update_query = """
+                UPDATE product SET availability=true
+                FROM (VALUES %s) AS update_payload (id)
+                WHERE product_id=update_payload.id"""
+        psycopg2.extras.execute_values(cur, update_query, availability_true_product_ids)
+        # for id in availability_true_product_ids:
+        #     cur.execute(""" UPDATE product SET availability=true WHERE product_id=%s""", (id,))
+        #     conn.connection.commit()
 
 
-def main():
+async def one_run():
     pg_con = PostgresConnection()
-
     db_products_ids = products_from_db(pg_con)
     db_categories = categories_ids_from_db(pg_con)
-    print('Собрал с Базы данных')
+    print('Собрал данные с Базы данных')
 
-    zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',
-                                            db_categories)
+    zara_categories = await make_categories_links(
+        'https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true', db_categories)
     new_categories_list = _new_categories(zara_categories)
     insert_new_categories(pg_con, new_categories_list)
     print('Заинсертил новые категории', len(new_categories_list))
 
     new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
-        get_product(zara_categories, db_products_ids)
+        await get_product(zara_categories, db_products_ids)
+    print(len(new_products_zara), len(availability_false_product_ids), len(availability_true_product_ids))
+
     insert_into_product(pg_con, new_products_zara)
-    print('Заинсертил', len(new_products_zara))
+    print('Заинсертил новые товары', len(new_products_zara))
+    #
+    # update_product_category(pg_con, update_category_products)
+    # print("Заапдейтил категории", len(update_category_products))
+    #
+    update_product_availability_set_false(pg_con, availability_false_product_ids)
+    print("Заапдейтил наличие, поставил значение False", len(availability_false_product_ids))
 
-    update_product_category(pg_con, update_category_products)
-    print("Заапдейтил категории", len(update_category_products))
+    update_product_availability_set_true(pg_con, availability_true_product_ids)
+    print("Заапдейтил наличие, поставил значение True", len(availability_true_product_ids))
 
-    update_product_availability(pg_con, availability_false_product_ids)
-    print("Заапдейтил в наличии False", len(availability_false_product_ids))
 
-    update_product_availability_true(pg_con, availability_true_product_ids)
-    print("Заапдейтил в наличии True", len(availability_true_product_ids))
+async def main():
+    run_number = 0
+    while True:
+        run_number += 1
+        print(f'!!!!!!!!!Пошли на run с номером {run_number}!!!!!!!!!!!!')
+        try:
+            start_time = time.time()
+            await one_run()
+            run_time = time.time() - start_time
+            await asyncio.sleep(3600 - run_time)
+        except Exception as ex:
+            print(ex.__class__)
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
