@@ -15,26 +15,26 @@ def dump_to_file(data, file_name):
         json.dump(data, file, indent=4, ensure_ascii=False)
 
 
-def product_ids_in_db(conn):
+def products_from_db(conn):
     conn.strong_check()
     with conn.connection.cursor() as cur:
         select_query = 'SELECT product_id, category_id, availability FROM product WHERE shop_id=1'
         cur.execute(select_query)
         records = cur.fetchall()
-        products_ids = {}
+        products = {}
         for rec in records:
-            products_ids[rec[0]] = rec[1], rec[2]
-        return products_ids
+            products[rec[0]] = rec[1], rec[2]
+        return products
 
 
-def categories_ids_in_db(conn):
+def categories_ids_from_db(conn):
     conn.strong_check()
     with conn.connection.cursor() as cur:
         select_query = 'SELECT category_id FROM category'
         cur.execute(select_query)
         records = cur.fetchall()
-        categories_ids = set(rec[0] for rec in records)
-        return categories_ids
+        categories = set(rec[0] for rec in records)
+        return categories
 
 
 def new_categories(zara_categories):
@@ -53,7 +53,6 @@ def insert_categories(conn, categories):
     with conn.connection.cursor() as cur:
         insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
         psycopg2.extras.execute_batch(cur, insert_query, categories)
-        conn.connection.commit()
 
 
 def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name, db_categories):
@@ -204,7 +203,6 @@ def get_product_from_category(new_products_zara, update_product_categories, db_p
 
 
 def insert_into_product(conn, new_products_zara):
-    conn.strong_check()
     products_list = []
     for product in new_products_zara:
         id = product.get('product_id')
@@ -219,6 +217,7 @@ def insert_into_product(conn, new_products_zara):
         availability = product.get('availability')
         _tmp_tuple = (id, name, price, price_high, link, image, category, shop_id, description, availability)
         products_list.append(_tmp_tuple)
+    conn.strong_check()
     with conn.connection.cursor() as cur:
         insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
         psycopg2.extras.execute_batch(cur, insert_query, products_list)
@@ -260,8 +259,8 @@ def update_product_availability_true(conn, availability_true_product_ids):
 def main():
     pg_con = PostgresConnection()
 
-    db_products_ids = product_ids_in_db(pg_con)
-    db_categories = categories_ids_in_db(pg_con)
+    db_products_ids = products_from_db(pg_con)
+    db_categories = categories_ids_from_db(pg_con)
     print('Собрал с Базы данных')
 
     zara_categories = make_categories_links('https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true',

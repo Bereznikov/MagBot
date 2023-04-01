@@ -411,6 +411,7 @@ async def checkout(update, context):
         insert_order_query = """
         INSERT INTO orders (customer_id, order_time, ship_adress, status_id, shipper_id)
         VALUES (%s, %s, %s, %s, %s)
+        RETURNING order_id
         """
         date_time_now = datetime.now(timezone.utc)
 
@@ -418,9 +419,6 @@ async def checkout(update, context):
         if customer.shipper == 'Почта России':
             shipper_id = 2
         cur.execute(insert_order_query, (customer.id, date_time_now, customer.address, 1, shipper_id,))
-        select_order_id_query = """
-        SELECT MAX(order_id) FROM orders"""
-        cur.execute(select_order_id_query)
         order_id = cur.fetchone()[0]
         order_detail = []
         for product in customer.cart:
