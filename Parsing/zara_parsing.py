@@ -309,14 +309,16 @@ async def main():
     run_number = 0
     while True:
         run_number += 1
-        print(f'!!!!!!!!!Пошли на run с номером {run_number}!!!!!!!!!!!!')
+        print(f'[+] Пошли на run с номером {run_number}')
         try:
             start_time = time.time()
             await one_run()
             run_time = time.time() - start_time
+            print(f'Отработал run за {run_time}')
             await asyncio.sleep(3600 - run_time)
         except Exception as ex:
             print(ex.__class__)
+            await asyncio.sleep(3600)
 
 
 if __name__ == '__main__':
