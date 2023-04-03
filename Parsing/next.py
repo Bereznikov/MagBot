@@ -1,4 +1,5 @@
 from fake_useragent import UserAgent
+import time
 import requests
 import asyncio
 import aiohttp
@@ -96,8 +97,8 @@ class Parser:
         return res
 
     async def get_data(self, session, info_pair, counter):
-        section_name = self._section_names[counter]
-        category_name = info_pair[0].strip()
+        section_name = self._section_names[counter].upper()
+        category_name = info_pair[0].strip().upper()
         url = info_pair[1]
         for i in range(1, 826):
             pagen_url = url.strip('-0') + '?p=' + str(i)
@@ -174,18 +175,15 @@ class Parser:
             await asyncio.gather(*tasks)
 
     def make_next_json_with_category_id(self):
-        next_product = self.result
         with open('next_categories_redacted.json', 'r', encoding='utf-8') as file:
             next_categories = json.load(file)
         next_categories_dict = {}
         for category in next_categories:
             next_categories_dict[category['category'] + category['subcategory']] = category['id']
-        for product in next_product:
-            if next_categories_dict.get(product['section_name'].upper() + product['category_name'].upper()):
+        for product in self.result:
+            if next_categories_dict.get(product['section_name'] + product['category_name']):
                 product['category_id'] = next_categories_dict.get(
-                    product['section_name'].upper() + product['category_name'].upper())
-        with open('next_updated.json', "w", encoding='utf-8') as file:
-            json.dump(next_product, file, indent=4, ensure_ascii=False)
+                    product['section_name'] + product['category_name'])
 
     def __call__(self, url, *args, **kwargs):
         soup = self.making_soup_txt(url)
@@ -220,28 +218,39 @@ def update_items(obj):
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = true""")
             query_result = cur.fetchall()
+            change_list = []
             print('Более не доступны:')
             for item_id in query_result:
                 if item_id[0] not in set_id:
-                    cur.execute(f"UPDATE product SET availability = false WHERE product_id = '{item_id[0]}'")
+                    change_list.append(item_id)
                     counter += 1
                     print(item_id[0], end=' ')
+            update_query = """
+                    UPDATE product SET availability=false
+                    FROM (VALUES %s) AS update_payload (id)
+                    WHERE product_id=update_payload.id"""
+            psycopg2.extras.execute_values(cur, update_query, change_list)
             print()
             print("Снова доступны:")
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = false""")
             query_result = cur.fetchall()
+            change_list = []
             for item_id in query_result:
                 if item_id[0] in set_id:
-                    cur.execute(f"UPDATE product SET availability = true WHERE product_id = '{item_id[0]}'")
+                    change_list.append(item_id)
                     counter += 1
                     print(item_id[0], end=' ')
-    print()
-    print('Обновлен статус продуктов:', counter)
+            update_query = """
+                    UPDATE product SET availability=true
+                    FROM (VALUES %s) AS update_payload (id)
+                    WHERE product_id=update_payload.id"""
+            psycopg2.extras.execute_values(cur, update_query, change_list)
+            print()
+            print('Обновлен статус продуктов:', counter)
 
 
-def insert_new_products(new_ids):
-    with open('next_updated.json', "r", encoding='utf-8') as file:
-        products = json.load(file)
+def insert_new_products(new_ids, obj):
+    products = obj.result
     no_category_list = []
     products_list = []
     new_products = []
@@ -281,13 +290,30 @@ def insert_new_products(new_ids):
         print(*no_category_list)
 
 
-if __name__ == '__main__':
-    db_url = 'postgresql://postgres:jisJH7i2ddKod3ItAfj5@containers-us-west-91.railway.app:5522/railway'
+def one_run():
     parse_site = Parser()
     parse_site('https://www.nextdirect.com/kz/ru')
     new_items = find_new_ids(parse_site)
     if new_items:
         print('Появились новые вещи, в количестве:', len(new_items))
         print(new_items)
-        insert_new_products(new_items)
+        insert_new_products(new_items, parse_site)
     update_items(parse_site)
+
+
+def main():
+    run_number = 0
+    while True:
+        run_number += 1
+        print(f'-----------Проход №{run_number}-----------')
+        try:
+            start_time = time.time()
+            one_run()
+            run_time = time.time() - start_time
+            time.sleep(3600 - run_time)
+        except Exception as ex:
+            print(ex.__class__)
+
+
+if __name__ == '__main__':
+    main()
