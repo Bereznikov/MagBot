@@ -189,7 +189,6 @@ class Parser:
         soup = self.making_soup_txt(url)
         sections = self.get_url_sections(soup)
         self._section_links = sections
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         asyncio.run(self.main())
         self.make_next_json_with_category_id()
 
