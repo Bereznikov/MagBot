@@ -1,9 +1,9 @@
 /Parsing/products/
 /Parsing/zara_categories_flat.json
 /Parsing/zara_categories_full.json
-/TelegramBot/key.py
+/magbot/key.py
 /TelegramBot/db_password.py
-/Parsing/db_password.py
+/magbot/db_password.py
 /Database/db_password.py
 /Parsing/next_async.py
 /Parsing/new_next.json
