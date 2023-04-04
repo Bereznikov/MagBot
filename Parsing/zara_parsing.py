@@ -233,28 +233,10 @@ def insert_into_product(conn, new_products_zara):
         psycopg2.extras.execute_batch(cur, insert_query, products_list)
 
 
-# def update_product_category(conn, update_category_products):
-#     conn.strong_check()
-#     with conn.connection.cursor() as cur:
-#         for record in update_category_products:
-#             cur.execute(""" UPDATE product SET category_id=%s, availability=%s WHERE product_id=%s""",
-#                         (record[0], record[2], record[1],))
-#             conn.connection.commit()
-# cur.execute("PREPARE updateStmt AS UPDATE product SET category_id=$1 WHERE product_id=$2")
-# psycopg2.extras.execute_batch(cur, "EXECUTE updateStmt (%s, %s)", update_category_products)
-# update_query = """ UPDATE product SET category_id=%s WHERE product_id=%s"""
-# psycopg2.extras.execute_values(cur, update_query, update_category_products)
-
-
 def update_product_availability_set_false(conn, availability_false_product_ids):
     availability_false_product_ids = [(a,) for a in availability_false_product_ids]
     conn.strong_check()
     with conn.connection.cursor() as cur:
-        # for id in availability_false_product_ids:
-        #     cur.execute(""" UPDATE product SET availability=false WHERE product_id=%s""", (id,))
-        #     conn.connection.commit()
-        # cur.execute("PREPARE updateStmtAv AS UPDATE product SET availability=false WHERE product_id=$1")
-        # psycopg2.extras.execute_batch(cur, "EXECUTE updateStmtAv (%s)", availability_false_product_ids)
         update_query = """
         UPDATE product SET availability=false
         FROM (VALUES %s) AS update_payload (id)
@@ -271,9 +253,6 @@ def update_product_availability_set_true(conn, availability_true_product_ids):
                 FROM (VALUES %s) AS update_payload (id)
                 WHERE product_id=update_payload.id"""
         psycopg2.extras.execute_values(cur, update_query, availability_true_product_ids)
-        # for id in availability_true_product_ids:
-        #     cur.execute(""" UPDATE product SET availability=true WHERE product_id=%s""", (id,))
-        #     conn.connection.commit()
 
 
 async def one_run():
@@ -294,10 +273,7 @@ async def one_run():
 
     insert_into_product(pg_con, new_products_zara)
     print('Заинсертил новые товары', len(new_products_zara))
-    #
-    # update_product_category(pg_con, update_category_products)
-    # print("Заапдейтил категории", len(update_category_products))
-    #
+
     update_product_availability_set_false(pg_con, availability_false_product_ids)
     print("Заапдейтил наличие, поставил значение False", len(availability_false_product_ids))
 
