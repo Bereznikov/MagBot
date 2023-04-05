@@ -7,6 +7,7 @@ import json
 # from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 from functools import partial
 from telegram import Bot
+
 # from key import TG_TOKEN_ADMIN
 TG_TOKEN_ADMIN = os.getenv('TG_TOKEN_ADMIN')
 HOST = os.getenv('HOST')
@@ -24,9 +25,9 @@ async def send_to_admin(username, order_id, order_time, ship_adress, bot):
 
 
 async def handle_notifications(notification, bot):
-    print(notification)
     try:
         order = json.loads(notification.payload)
+        print(notification)
     except AttributeError:
         return
     except Exception as ex:

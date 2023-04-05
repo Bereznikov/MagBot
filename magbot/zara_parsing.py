@@ -77,7 +77,7 @@ async def get_html(url, category, clean_categories):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=make_headers()) as resp:
             text = await resp.text()
-            if text != '{"productGroups":[]}' and len(text) > 600:
+            if text != '{"productGroups":[]}' and len(text) > 500:
                 clean_categories.append(category)
 
 
@@ -162,7 +162,7 @@ async def get_product(zara_categories, db_products_ids):
 async def get_product_from_category(new_products_zara, update_product_categories, db_products_ids, url, id,
                                     unique_product_ids):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=make_headers(), proxy='http://202.162.105.202:8000') as resp:
+        async with session.get(url, headers=make_headers()) as resp:
             category_info = await resp.json()
     elements = category_info['productGroups'][0]['elements']
     for el_num, elem in enumerate(elements):
@@ -266,7 +266,6 @@ async def one_run():
     new_categories_list = _new_categories(zara_categories)
     insert_new_categories(pg_con, new_categories_list)
     print('Заинсертил новые категории', len(new_categories_list))
-    # await asyncio.sleep(60)
     new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
         await get_product(zara_categories, db_products_ids)
     print(len(new_products_zara), len(availability_false_product_ids), len(availability_true_product_ids))
