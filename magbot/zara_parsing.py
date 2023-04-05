@@ -291,10 +291,10 @@ async def main():
             await one_run()
             run_time = time.time() - start_time
             print(f'Отработал run за {run_time}')
-            await asyncio.sleep(3600 - run_time)
+            await asyncio.sleep(60 - run_time)
         except Exception as ex:
             print(ex.__class__)
-            await asyncio.sleep(3600)
+            await asyncio.sleep(60)
 
 
 if __name__ == '__main__':
