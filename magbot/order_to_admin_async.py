@@ -44,6 +44,7 @@ async def handle_notifications(notification, bot):
 
 
 async def main():
+    print('admin', TG_TOKEN_ADMIN)
     bot = Bot(TG_TOKEN_ADMIN)
     listener = asyncpg_listen.NotificationListener(asyncpg_listen.connect_func(
         database='railway', user='postgres', port=5522, host=HOST,

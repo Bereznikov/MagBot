@@ -460,7 +460,7 @@ if __name__ == '__main__':
     # my_persistence = PicklePersistence(filepath='my_file.pkl')
     # my_persistence = DictPersistence()
     # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
-    print(os.getenv('TG_TOKEN_MAG'))
+    print('mag', os.getenv('TG_TOKEN_MAG'))
     application = ApplicationBuilder().token(os.getenv('TG_TOKEN_MAG')).build()
 
     conv_handler = ConversationHandler(
