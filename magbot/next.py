@@ -1,14 +1,16 @@
-from fake_useragent import UserAgent
-import time
-import requests
 import asyncio
+import os
+import time
+
 import aiohttp
-from bs4 import BeautifulSoup
-import json
 import psycopg2
 import psycopg2.extras
-import os
+import requests
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+
 from next_categories_reducted import next_categories_reducted
+
 password_railway = os.environ['RAILWAY_PASSWORD']
 host = os.environ['HOST']
 
@@ -303,19 +305,19 @@ def one_run():
     update_items(parse_site)
 
 
-# def main():
-#     run_number = 0
-#     while True:
-#         run_number += 1
-#         print(f'-----------Проход №{run_number}-----------')
-#         try:
-#             start_time = time.time()
-#             one_run()
-#             run_time = time.time() - start_time
-#             time.sleep(3600 - run_time)
-#         except Exception as ex:
-#             print(ex.__class__)
+def main():
+    run_number = 0
+    while True:
+        run_number += 1
+        print(f'-----------Проход №{run_number}-----------')
+        try:
+            start_time = time.time()
+            one_run()
+            run_time = time.time() - start_time
+            time.sleep(3600 - run_time)
+        except Exception as ex:
+            print(ex.__class__)
 
 
 if __name__ == '__main__':
-    one_run()
+    main()
