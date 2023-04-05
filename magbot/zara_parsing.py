@@ -79,8 +79,6 @@ async def get_html(url, category, clean_categories):
             text = await resp.text()
             if text != '{"productGroups":[]}' and len(text) > 600:
                 clean_categories.append(category)
-            if text != '{"productGroups":[]}' and len(text) <= 600:
-                print(text)
 
 
 async def clean_categories_links(zara_categories):
@@ -268,7 +266,7 @@ async def one_run():
     new_categories_list = _new_categories(zara_categories)
     insert_new_categories(pg_con, new_categories_list)
     print('Заинсертил новые категории', len(new_categories_list))
-
+    await asyncio.sleep(60)
     new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
         await get_product(zara_categories, db_products_ids)
     print(len(new_products_zara), len(availability_false_product_ids), len(availability_true_product_ids))
@@ -293,10 +291,10 @@ async def main():
             await one_run()
             run_time = time.time() - start_time
             print(f'Отработал run за {run_time}')
-            await asyncio.sleep(60 - run_time)
+            await asyncio.sleep(3600 - run_time)
         except Exception as ex:
             print(ex.__class__)
-            await asyncio.sleep(60)
+            await asyncio.sleep(36060)
 
 
 if __name__ == '__main__':
