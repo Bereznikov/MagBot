@@ -4,6 +4,7 @@ import os
 HOST = os.getenv('HOST')
 RAILWAY_PASSWORD = os.getenv('RAILWAY_PASSWORD')
 
+
 class PostgresConnection:
     def __init__(self):
         connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
