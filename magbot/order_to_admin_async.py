@@ -2,10 +2,10 @@ import asyncpg
 import asyncpg_listen
 import asyncio
 import json
-from db_password import password_railway, host
+# from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 from functools import partial
 from telegram import Bot
-from key import key_admin as key
+# from key import TG_TOKEN_ADMIN
 
 
 async def send_to_admin(username, order_id, order_time, ship_adress, bot):
@@ -32,17 +32,17 @@ async def handle_notifications(notification, bot):
     order_time = order['order_time']
     ship_address = order['ship_adress']
     order_time = f'Дата: {order_time[:10]} Время: {order_time[11:19]}'
-    conn = await asyncpg.connect(database='railway', user='postgres', port=5522, host=host,
-                                 password=password_railway)
+    conn = await asyncpg.connect(database='railway', user='postgres', port=5522, host=HOST,
+                                 password=PASSWORD_RAILWAY)
     username = await conn.fetchval('SELECT username FROM customer WHERE customer_id = $1', customer_id)
     await send_to_admin(username, order_id, order_time, ship_address, bot)
 
 
 async def main():
-    bot = Bot(key)
+    bot = Bot(TG_TOKEN_ADMIN)
     listener = asyncpg_listen.NotificationListener(asyncpg_listen.connect_func(
-        database='railway', user='postgres', port=5522, host=host,
-        password=password_railway))
+        database='railway', user='postgres', port=5522, host=HOST,
+        password=PASSWORD_RAILWAY))
     listener_task = asyncio.create_task(
         listener.run(
             {"orders": partial(handle_notifications, bot=bot)},

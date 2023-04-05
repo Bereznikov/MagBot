@@ -7,8 +7,7 @@ from bs4 import BeautifulSoup
 import json
 import psycopg2
 import psycopg2.extras
-from db_password import password_railway, host
-
+# from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 
 class Parser:
     def __init__(self):
@@ -196,8 +195,8 @@ class Parser:
 def find_new_ids(obj):
     set_id = obj.id_set
     new_ids = []
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
+                          password=PASSWORD_RAILWAY) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
@@ -211,8 +210,8 @@ def find_new_ids(obj):
 def update_items(obj):
     counter = 0
     set_id = obj.id_set
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
+                          password=PASSWORD_RAILWAY) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = true""")
@@ -277,8 +276,8 @@ def insert_new_products(new_ids, obj):
             no_category_list.append((product_id, product['section_name'], product['category_name']))
         else:
             print(product_id, category)
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
-                          password=password_railway) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
+                          password=PASSWORD_RAILWAY) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""

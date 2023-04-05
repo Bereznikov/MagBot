@@ -6,7 +6,7 @@ import psycopg2.extras
 # import json
 from customer import Customer
 from db_connection import PostgresConnection
-from key import key
+# from key import key as TG_TOKEN_MAG
 from datetime import datetime, timezone
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InputMediaPhoto
@@ -459,7 +459,7 @@ if __name__ == '__main__':
     # my_persistence = DictPersistence()
     # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
 
-    application = ApplicationBuilder().token(key).build()
+    application = ApplicationBuilder().token(TG_TOKEN_MAG).build()
 
     conv_handler = ConversationHandler(
         entry_points=[

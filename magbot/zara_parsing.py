@@ -3,7 +3,7 @@ import time
 import aiohttp
 import requests
 from fake_useragent import UserAgent
-from magbot.db_connection import PostgresConnection
+from db_connection import PostgresConnection
 import json
 import psycopg2.extras
 
