@@ -1,5 +1,3 @@
-import os
-
 from fake_useragent import UserAgent
 import time
 import requests
@@ -9,12 +7,11 @@ from bs4 import BeautifulSoup
 import json
 import psycopg2
 import psycopg2.extras
+import os
+from next_categories_reducted import next_categories_reducted
+password_railway = os.environ['password_railway']
+host = os.environ['host']
 
-HOST = os.getenv('HOST')
-PASSWORD_RAILWAY = os.getenv('RAILWAY_PASSWORD')
-
-
-# from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 
 class Parser:
     def __init__(self):
@@ -181,8 +178,7 @@ class Parser:
             await asyncio.gather(*tasks)
 
     def make_next_json_with_category_id(self):
-        with open('next_categories_redacted.json', 'r', encoding='utf-8') as file:
-            next_categories = json.load(file)
+        next_categories = next_categories_reducted
         next_categories_dict = {}
         for category in next_categories:
             next_categories_dict[category['category'] + category['subcategory']] = category['id']
@@ -200,10 +196,11 @@ class Parser:
 
 
 def find_new_ids(obj):
+    print('Начал работу с базой')
     set_id = obj.id_set
     new_ids = []
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
-                          password=PASSWORD_RAILWAY) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2""")
@@ -217,8 +214,8 @@ def find_new_ids(obj):
 def update_items(obj):
     counter = 0
     set_id = obj.id_set
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
-                          password=PASSWORD_RAILWAY) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             cur.execute("""SELECT product_id FROM product WHERE shop_id = 2 AND availability = true""")
@@ -283,8 +280,8 @@ def insert_new_products(new_ids, obj):
             no_category_list.append((product_id, product['section_name'], product['category_name']))
         else:
             print(product_id, category)
-    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
-                          password=PASSWORD_RAILWAY) as conn:
+    with psycopg2.connect(dbname='railway', user='postgres', port=5522, host=host,
+                          password=password_railway) as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
             insert_query = """ INSERT INTO product VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
@@ -306,19 +303,19 @@ def one_run():
     update_items(parse_site)
 
 
-def main():
-    run_number = 0
-    while True:
-        run_number += 1
-        print(f'-----------Проход №{run_number}-----------')
-        try:
-            start_time = time.time()
-            one_run()
-            run_time = time.time() - start_time
-            time.sleep(3600 - run_time)
-        except Exception as ex:
-            print(ex.__class__)
+# def main():
+#     run_number = 0
+#     while True:
+#         run_number += 1
+#         print(f'-----------Проход №{run_number}-----------')
+#         try:
+#             start_time = time.time()
+#             one_run()
+#             run_time = time.time() - start_time
+#             time.sleep(3600 - run_time)
+#         except Exception as ex:
+#             print(ex.__class__)
 
 
 if __name__ == '__main__':
-    main()
+    one_run()

@@ -1,4 +1,4 @@
-[
+next_categories_reducted = [
     {
         "category": "ДЕВОЧКИ",
         "subcategory": "КОМБИНЕЗОНЫ И ПИЖАМЫ",
