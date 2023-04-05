@@ -9,8 +9,8 @@ import psycopg2
 import psycopg2.extras
 import os
 from next_categories_reducted import next_categories_reducted
-password_railway = os.environ['password_railway']
-host = os.environ['host']
+password_railway = os.environ['RAILWAY_PASSWORD']
+host = os.environ['HOST']
 
 
 class Parser:
