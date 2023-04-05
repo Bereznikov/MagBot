@@ -103,7 +103,7 @@ class Parser:
         section_name = self._section_names[counter].upper()
         category_name = info_pair[0].strip().upper()
         url = info_pair[1]
-        for i in range(1, 2):
+        for i in range(1, 826):
             pagen_url = url.strip('-0') + '?p=' + str(i)
             async with session.get(url=pagen_url) as response:
                 resp = await response.text()

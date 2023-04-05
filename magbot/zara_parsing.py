@@ -293,7 +293,7 @@ async def main():
             await asyncio.sleep(3600 - run_time)
         except Exception as ex:
             print(ex.__class__)
-            await asyncio.sleep(36060)
+            await asyncio.sleep(3600)
 
 
 if __name__ == '__main__':
