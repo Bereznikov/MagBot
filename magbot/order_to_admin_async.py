@@ -10,7 +10,7 @@ from telegram import Bot
 # from key import TG_TOKEN_ADMIN
 TG_TOKEN_ADMIN = os.getenv('TG_TOKEN_ADMIN')
 HOST = os.getenv('HOST')
-PASSWORD_RAILWAY = os.getenv('RAILWAY')
+PASSWORD_RAILWAY = os.getenv('RAILWAY_PASSWORD')
 
 
 async def send_to_admin(username, order_id, order_time, ship_adress, bot):

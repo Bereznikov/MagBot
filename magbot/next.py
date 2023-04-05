@@ -11,7 +11,7 @@ import psycopg2
 import psycopg2.extras
 
 HOST = os.getenv('HOST')
-PASSWORD_RAILWAY = os.getenv('RAILWAY')
+PASSWORD_RAILWAY = os.getenv('RAILWAY_PASSWORD')
 
 
 # from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
