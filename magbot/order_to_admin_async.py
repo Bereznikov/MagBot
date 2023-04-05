@@ -1,3 +1,5 @@
+import os
+
 import asyncpg
 import asyncpg_listen
 import asyncio
@@ -6,6 +8,9 @@ import json
 from functools import partial
 from telegram import Bot
 # from key import TG_TOKEN_ADMIN
+TG_TOKEN_ADMIN = os.getenv('TG_TOKEN_ADMIN')
+HOST = os.getenv('HOST')
+PASSWORD_RAILWAY = os.getenv('RAILWAY')
 
 
 async def send_to_admin(username, order_id, order_time, ship_adress, bot):
