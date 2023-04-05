@@ -77,8 +77,10 @@ async def get_html(url, category, clean_categories):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=make_headers()) as resp:
             text = await resp.text()
-            if text != '{"productGroups":[]}' and len(text) > 1000:
+            if text != '{"productGroups":[]}' and len(text) > 200:
                 clean_categories.append(category)
+            if text != '{"productGroups":[]}' and len(text) < 200:
+                print(text)
 
 
 async def clean_categories_links(zara_categories):
