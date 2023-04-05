@@ -317,6 +317,7 @@ def main():
             time.sleep(3600 - run_time)
         except Exception as ex:
             print(ex.__class__)
+            time.sleep(3600)
 
 
 if __name__ == '__main__':
