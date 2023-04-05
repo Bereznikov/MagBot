@@ -1,11 +1,12 @@
 import psycopg2
+import os
 # from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 
 
 class PostgresConnection:
     def __init__(self):
-        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
-                                      password=PASSWORD_RAILWAY)
+        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=os.getenv('HOST'),
+                                      password=os.getenv('PASSWORD_RAILWAY'))
         connection.autocommit = True
         self.connection = connection
 
@@ -24,7 +25,7 @@ class PostgresConnection:
             self.update()
 
     def update(self):
-        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=HOST,
-                                      password=PASSWORD_RAILWAY)
+        connection = psycopg2.connect(dbname='railway', user='postgres', port=5522, host=os.getenv('HOST'),
+                                      password=os.getenv('PASSWORD_RAILWAY'))
         connection.autocommit = True
         self.connection = connection

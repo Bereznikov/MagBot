@@ -1,4 +1,6 @@
 import logging
+import os
+
 import psycopg2
 import psycopg2.extras
 # import traceback
@@ -458,8 +460,8 @@ if __name__ == '__main__':
     # my_persistence = PicklePersistence(filepath='my_file.pkl')
     # my_persistence = DictPersistence()
     # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
-
-    application = ApplicationBuilder().token(TG_TOKEN_MAG).build()
+    print(os.getenv('TG_TOKEN_MAG'))
+    application = ApplicationBuilder().token(os.getenv('TG_TOKEN_MAG')).build()
 
     conv_handler = ConversationHandler(
         entry_points=[

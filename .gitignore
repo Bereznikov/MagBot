@@ -17,3 +17,5 @@
 /Parsing/next_idset.txt
 /TelegramBot/key.py
 /.idea/
+/magbot/env_veriables.py
+/.env
