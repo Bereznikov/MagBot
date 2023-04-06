@@ -117,23 +117,23 @@ async def get_everything(zara_categories, db_products_ids):
     clean_categories = []
     new_products_zara = []
     unique_product_ids = {}
-    availability_false_product_ids = set()
-    availability_true_product_ids = set()
+    availability_false_product_ids = []
+    availability_true_product_ids = []
     for category in zara_categories:
         task = asyncio.create_task(
-            get_html(category['url'], clean_categories, new_products_zara,
-                     db_products_ids, category['id'], unique_product_ids))
+            get_html(category['url'], clean_categories, new_products_zara, db_products_ids, category['id'],
+                     unique_product_ids))
         tasks.append(task)
     await asyncio.gather(*tasks)
     print(f"Было {len(zara_categories)} категорий, стало {len(clean_categories)}")
 
     for product in db_products_ids:
-        if (product not in unique_product_ids) and db_products_ids[product][1]:
-            availability_false_product_ids.add(product)
+        if ((product not in unique_product_ids) or not unique_product_ids[product][1]) and db_products_ids[product][1]:
+            availability_false_product_ids.append(product)
         if product in unique_product_ids and unique_product_ids[product][1] and not db_products_ids[product][1]:
-            availability_true_product_ids.add(product)
+            availability_true_product_ids.append(product)
 
-    return new_products_zara, list(availability_false_product_ids), list(availability_true_product_ids)
+    return new_products_zara, availability_false_product_ids, availability_true_product_ids
 
 
 async def get_html(url, clean_categories, new_products_zara, db_products_ids, id, unique_product_ids):
@@ -189,7 +189,6 @@ async def get_product_from_category(response, new_products_zara, db_products_ids
                     'description': comp.get('description'),
                     'category_id': id,
                 })
-                unique_product_ids[product_id] = id
 
 
 def insert_new_product(conn, new_products_zara):
