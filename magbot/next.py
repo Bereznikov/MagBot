@@ -314,10 +314,11 @@ def main():
             start_time = time.time()
             one_run()
             run_time = time.time() - start_time
-            time.sleep(3600 - run_time)
+            print("NEXT PARSING УСПЕШНО ЗАВЕРШИЛСЯ!")
+            time.sleep(21600 - run_time)
         except Exception as ex:
             print(ex.__class__)
-            time.sleep(3600)
+            time.sleep(21600)
 
 
 if __name__ == '__main__':

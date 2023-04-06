@@ -4,18 +4,14 @@ import aiohttp
 import requests
 from fake_useragent import UserAgent
 from db_connection import PostgresConnection
-import json
 import psycopg2.extras
+
+URL = 'https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true'
 
 
 def make_headers():
     ua = UserAgent()
     return {'User-Agent': ua.random}
-
-
-def dump_to_file(data, file_name):
-    with open(file_name, "w") as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
 
 
 def products_from_db(conn):
@@ -30,7 +26,7 @@ def products_from_db(conn):
         return products
 
 
-def categories_ids_from_db(conn):
+def category_from_db(conn):
     conn.strong_check()
     with conn.connection.cursor() as cur:
         select_query = 'SELECT category_id FROM category'
@@ -52,13 +48,15 @@ def _new_categories(zara_categories):
 
 
 def insert_new_categories(conn, categories):
+    categories = _new_categories(categories)
     conn.strong_check()
     with conn.connection.cursor() as cur:
         insert_query = """ INSERT INTO category VALUES (%s,%s,%s)"""
         psycopg2.extras.execute_batch(cur, insert_query, categories)
+    print(f'Заинсертил новые категории {len(categories)}')
 
 
-async def make_categories_links(url, db_categories, db_product_ids):
+async def make_categories_links(url, db_categories):
     full_categories_links = requests.get(url=url, headers=make_headers()).json()
     zara_categories_full = full_categories_links['categories']
     zara_categories = []
@@ -70,45 +68,16 @@ async def make_categories_links(url, db_categories, db_product_ids):
     children_category = zara_categories_full[2]['subcategories']
     for category in children_category:
         check_all_subcategory(category, zara_categories, category, unique_category_ids, '', db_categories)
-    return await clean_categories_links(zara_categories, db_product_ids)
+    return zara_categories
 
 
-async def get_html(url, category, clean_categories, new_products_zara, update_product_categories, db_products_ids,
-                   id, unique_product_ids):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=make_headers()) as resp:
-            text = await resp.text()
-            if text != '{"productGroups":[]}' and text[:11] != '<HTML><HEAD>':
-                await get_product_from_category(resp, new_products_zara, update_product_categories, db_products_ids,
-                                                id, unique_product_ids)
-                clean_categories.append(category)
-
-
-async def clean_categories_links(zara_categories, db_products_ids):
-    tasks = []
-    clean_categories = []
-    new_products_zara = []
-    update_category_products = []
-    unique_product_ids = {}
-    availability_false_product_ids = set()
-    availability_true_product_ids = set()
-    for category in zara_categories:
-        task = asyncio.create_task(
-            get_html(category['url'], category, clean_categories, new_products_zara, update_category_products,
-                     db_products_ids,
-                     category['id'], unique_product_ids))
-        tasks.append(task)
-    await asyncio.gather(*tasks)
-    print(f"Почистил ссылки, было {len(zara_categories)}, стало {len(clean_categories)}")
-
-    for product in db_products_ids:
-        if (product not in unique_product_ids) and db_products_ids[product][1]:
-            availability_false_product_ids.add(product)
-        if product in unique_product_ids and unique_product_ids[product][1] and not db_products_ids[product][1]:
-            availability_true_product_ids.add(product)
-
-    return clean_categories, new_products_zara, update_category_products, list(availability_false_product_ids), list(
-        availability_true_product_ids)
+def check_all_subcategory(category, zara_categories, original, unique_ids, category_name, db_categories):
+    for subcategory in category['subcategories']:
+        tmp_subcategory = subcategory['name'].replace(' ', ' ')
+        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}',
+                               db_categories)
+        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}',
+                              db_categories)
 
 
 def add_to_categories_list(category, subcategory, zara_categories, unique_category_ids, category_name, db_categories):
@@ -143,44 +112,41 @@ def add_to_categories_list(category, subcategory, zara_categories, unique_catego
         unique_category_ids.add(sub_category_ap)
 
 
-def check_all_subcategory(category, zara_categories, original, unique_ids, category_name, db_categories):
-    for subcategory in category['subcategories']:
-        tmp_subcategory = subcategory['name'].replace(' ', ' ')
-        add_to_categories_list(original, subcategory, zara_categories, unique_ids, f'{category_name} {tmp_subcategory}',
-                               db_categories)
-        check_all_subcategory(subcategory, zara_categories, original, unique_ids, f'{category_name} {tmp_subcategory}',
-                              db_categories)
+async def get_everything(zara_categories, db_products_ids):
+    tasks = []
+    clean_categories = []
+    new_products_zara = []
+    unique_product_ids = {}
+    availability_false_product_ids = set()
+    availability_true_product_ids = set()
+    for category in zara_categories:
+        task = asyncio.create_task(
+            get_html(category['url'], clean_categories, new_products_zara,
+                     db_products_ids, category['id'], unique_product_ids))
+        tasks.append(task)
+    await asyncio.gather(*tasks)
+    print(f"Было {len(zara_categories)} категорий, стало {len(clean_categories)}")
+
+    for product in db_products_ids:
+        if (product not in unique_product_ids) and db_products_ids[product][1]:
+            availability_false_product_ids.add(product)
+        if product in unique_product_ids and unique_product_ids[product][1] and not db_products_ids[product][1]:
+            availability_true_product_ids.add(product)
+
+    return new_products_zara, list(availability_false_product_ids), list(availability_true_product_ids)
 
 
-# async def get_product(zara_categories, db_products_ids):
-#     tasks = []
-#     new_products_zara = []
-#     update_category_products = []
-#     unique_product_ids = {}
-#     availability_false_product_ids = set()
-#     availability_true_product_ids = set()
-#     for category in zara_categories:
-#         id = category['id']
-#         url = category['url']
-#         task = asyncio.create_task(
-#             get_product_from_category(new_products_zara, update_category_products, db_products_ids, url, id,
-#                                       unique_product_ids))
-#         tasks.append(task)
-#     await asyncio.gather(*tasks)
-#     print(f'Обработал все категории')
-#     for product in db_products_ids:
-#         if (product not in unique_product_ids) and db_products_ids[product][1]:
-#             availability_false_product_ids.add(product)
-#         if product in unique_product_ids and unique_product_ids[product][1] and not db_products_ids[product][1]:
-#             availability_true_product_ids.add(product)
-#
-#     return new_products_zara, update_category_products, list(availability_false_product_ids), list(
-#         availability_true_product_ids)
+async def get_html(url, clean_categories, new_products_zara, db_products_ids, id, unique_product_ids):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=make_headers()) as resp:
+            text = await resp.text()
+            if text != '{"productGroups":[]}' and text[:11] != '<HTML><HEAD>':
+                await get_product_from_category(resp, new_products_zara, db_products_ids, id, unique_product_ids)
+                clean_categories.append(id)
 
 
-async def get_product_from_category(resp, new_products_zara, update_product_categories, db_products_ids, id,
-                                    unique_product_ids):
-    category_info = await resp.json()
+async def get_product_from_category(response, new_products_zara, db_products_ids, id, unique_product_ids):
+    category_info = await response.json()
     elements = category_info['productGroups'][0]['elements']
     for el_num, elem in enumerate(elements):
         try:
@@ -211,9 +177,6 @@ async def get_product_from_category(resp, new_products_zara, update_product_cate
                 availability = comp.get('availability') == 'in_stock'
                 unique_product_ids[product_id] = id, availability
 
-                if product_id in db_products_ids and db_products_ids[product_id][0] != id:
-                    update_product_categories.append((id, product_id, availability))
-                    continue
                 if product_id in db_products_ids:
                     continue
                 new_products_zara.append({
@@ -229,7 +192,7 @@ async def get_product_from_category(resp, new_products_zara, update_product_cate
                 unique_product_ids[product_id] = id
 
 
-def insert_into_product(conn, new_products_zara):
+def insert_new_product(conn, new_products_zara):
     products_list = []
     for product in new_products_zara:
         id = product.get('product_id')
@@ -275,26 +238,18 @@ def update_product_availability_set_true(conn, availability_true_product_ids):
 async def one_run():
     pg_con = PostgresConnection()
     db_products_ids = products_from_db(pg_con)
-    db_categories = categories_ids_from_db(pg_con)
+    db_categories = category_from_db(pg_con)
     print('Собрал данные с Базы данных')
 
-    URL = 'https://www.zara.com/kz/ru/categories?categoryId=21872718&ajax=true'
-    zara_categories, new_products_zara, update_category_products, availability_false_product_ids, \
-        availability_true_product_ids \
-        = await make_categories_links(URL, db_categories, db_products_ids)
-    print(len(zara_categories), len(new_products_zara), len(update_category_products),
-          len(availability_true_product_ids),
-          len(availability_false_product_ids))
-    new_categories_list = _new_categories(zara_categories)
-    insert_new_categories(pg_con, new_categories_list)
-    print('Заинсертил новые категории', len(new_categories_list))
-    # new_products_zara, update_category_products, availability_false_product_ids, availability_true_product_ids = \
-    #     await get_product(zara_categories, db_products_ids)
-    # print(len(new_products_zara), len(availability_false_product_ids), len(availability_true_product_ids))
-    #
-    insert_into_product(pg_con, new_products_zara)
+    zara_categories = await make_categories_links(URL, db_categories)
+    new_products_zara, availability_false_product_ids, availability_true_product_ids \
+        = await get_everything(zara_categories, db_products_ids)
+
+    insert_new_categories(pg_con, zara_categories)
+
+    insert_new_product(pg_con, new_products_zara)
     print('Заинсертил новые товары', len(new_products_zara))
-    #
+
     update_product_availability_set_false(pg_con, availability_false_product_ids)
     print("Заапдейтил наличие, поставил значение False", len(availability_false_product_ids))
 
@@ -306,16 +261,16 @@ async def main():
     run_number = 0
     while True:
         run_number += 1
-        print(f'[+] Пошли на run с номером {run_number}')
+        print(f'[+] Zara Пошли на run с номером {run_number}')
         try:
             start_time = time.time()
             await one_run()
             run_time = time.time() - start_time
-            print(f'Отработал run за {run_time}')
-            await asyncio.sleep(9600 - run_time)
+            print(f'Zara Отработал run за {run_time}')
+            await asyncio.sleep(21600 - run_time)
         except Exception as ex:
-            print(ex.__class__)
-            await asyncio.sleep(9600)
+            print(f'Zara {ex.__class__}')
+            await asyncio.sleep(21600)
 
 
 if __name__ == '__main__':
