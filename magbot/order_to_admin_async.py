@@ -4,11 +4,9 @@ import asyncpg
 import asyncpg_listen
 import asyncio
 import json
-# from db_password import host as HOST, password_railway as PASSWORD_RAILWAY
 from functools import partial
 from telegram import Bot
 
-# from key import TG_TOKEN_ADMIN
 TG_TOKEN_ADMIN = os.getenv('TG_TOKEN_ADMIN')
 HOST = os.getenv('HOST')
 PASSWORD_RAILWAY = os.getenv('RAILWAY_PASSWORD')
@@ -27,11 +25,11 @@ async def send_to_admin(username, order_id, order_time, ship_adress, bot):
 async def handle_notifications(notification, bot):
     try:
         order = json.loads(notification.payload)
-        print(notification)
+        print(f'Admin - {notification}')
     except AttributeError:
         return
     except Exception as ex:
-        print(ex.__class__)
+        print(f'Admin  {ex.__class__}')
         return
     customer_id = order["customer_id"]
     order_id = order["order_id"]
@@ -45,7 +43,6 @@ async def handle_notifications(notification, bot):
 
 
 async def main():
-    print('admin', TG_TOKEN_ADMIN)
     bot = Bot(TG_TOKEN_ADMIN)
     listener = asyncpg_listen.NotificationListener(asyncpg_listen.connect_func(
         database='railway', user='postgres', port=5522, host=HOST,
