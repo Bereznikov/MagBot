@@ -1,18 +1,12 @@
 import logging
 import os
-
 import psycopg2
 import psycopg2.extras
-# import traceback
-# import html
-# import json
 from customer import Customer
 from db_connection import PostgresConnection
-# from key import key as TG_TOKEN_MAG
 from datetime import datetime, timezone
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InputMediaPhoto
-# Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ConversationHandler, filters, \
     CallbackQueryHandler
 
@@ -441,11 +435,8 @@ async def checkout(update, context):
 async def error_handler(update, context):
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
+
 if __name__ == '__main__':
-    # my_persistence = PicklePersistence(filepath='my_file.pkl')
-    # my_persistence = DictPersistence()
-    # application = ApplicationBuilder().token(key).persistence(my_persistence).build()
-    print('mag', os.getenv('TG_TOKEN_MAG'))
     application = ApplicationBuilder().token(os.getenv('TG_TOKEN_MAG')).build()
 
     conv_handler = ConversationHandler(
@@ -475,7 +466,6 @@ if __name__ == '__main__':
             CHECKOUT: [MessageHandler(filters.Regex("^(СДЭК|Почта России)$"), checkout)]
         },
         fallbacks=[CommandHandler("start", start)],
-        # persistent=True,
         name='magbot',
     )
     application.add_error_handler(error_handler)
