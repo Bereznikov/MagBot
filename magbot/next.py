@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-from next_categories_reducted import next_categories_reducted
+from next_categories_redacted import next_categories_redacted
 
 password_railway = os.environ['RAILWAY_PASSWORD']
 host = os.environ['HOST']

@@ -1,4 +1,4 @@
-next_categories_reducted = [
+next_categories_redacted = [
     {
         "category": "ДЕВОЧКИ",
         "subcategory": "КОМБИНЕЗОНЫ И ПИЖАМЫ",
