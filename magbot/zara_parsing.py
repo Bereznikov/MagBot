@@ -238,7 +238,7 @@ async def one_run():
     pg_con = PostgresConnection()
     db_products_ids = products_from_db(pg_con)
     db_categories = category_from_db(pg_con)
-    print('Собрал данные с Базы данных')
+    print('Zara: Собрал данные с Базы данных')
 
     zara_categories = await make_categories_links(URL, db_categories)
     new_products_zara, availability_false_product_ids, availability_true_product_ids \
@@ -247,13 +247,13 @@ async def one_run():
     insert_new_categories(pg_con, zara_categories)
 
     insert_new_product(pg_con, new_products_zara)
-    print('Заинсертил новые товары', len(new_products_zara))
+    print('Zara: Заинсертил новые товары', len(new_products_zara))
 
     update_product_availability_set_false(pg_con, availability_false_product_ids)
-    print("Заапдейтил наличие, поставил значение False", len(availability_false_product_ids))
+    print("Zara: Заапдейтил наличие, поставил значение False", len(availability_false_product_ids))
 
     update_product_availability_set_true(pg_con, availability_true_product_ids)
-    print("Заапдейтил наличие, поставил значение True", len(availability_true_product_ids))
+    print("Zara: Заапдейтил наличие, поставил значение True", len(availability_true_product_ids))
 
 
 async def main():
@@ -265,10 +265,10 @@ async def main():
             start_time = time.time()
             await one_run()
             run_time = time.time() - start_time
-            print(f'Zara Отработал run за {run_time}')
+            print(f'Zara: Отработал run за {run_time}')
             await asyncio.sleep(21600 - run_time)
         except Exception as ex:
-            print(f'Zara {ex.__class__}')
+            print(f'Zara: {ex.__class__}')
             await asyncio.sleep(21600)
 
 
