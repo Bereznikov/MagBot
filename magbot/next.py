@@ -180,7 +180,7 @@ class Parser:
             await asyncio.gather(*tasks)
 
     def make_next_json_with_category_id(self):
-        next_categories = next_categories_reducted
+        next_categories = next_categories_redacted
         next_categories_dict = {}
         for category in next_categories:
             next_categories_dict[category['category'] + category['subcategory']] = category['id']
