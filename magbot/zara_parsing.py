@@ -137,8 +137,8 @@ async def get_everything(zara_categories, db_products_ids):
 
 
 async def get_html(url, clean_categories, new_products_zara, db_products_ids, id, unique_product_ids):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=make_headers()) as resp:
+    async with aiohttp.ClientSession(trust_env=True) as session:
+        async with session.get(url, headers=make_headers(), ssl=False) as resp:
             text = await resp.text()
             if text != '{"productGroups":[]}' and text[:11] != '<HTML><HEAD>':
                 await get_product_from_category(resp, new_products_zara, db_products_ids, id, unique_product_ids)
@@ -241,6 +241,7 @@ async def one_run():
     print('Zara: Собрал данные с Базы данных')
 
     zara_categories = await make_categories_links(URL, db_categories)
+    print(len(zara_categories))
     new_products_zara, availability_false_product_ids, availability_true_product_ids \
         = await get_everything(zara_categories, db_products_ids)
 
